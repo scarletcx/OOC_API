@@ -12,11 +12,11 @@ class User(db.Model):
     user_baits = db.Column(db.Integer, nullable=False, default=0)
     current_avator_nft = db.Column(JSONB, nullable=True)
     current_rod_nft = db.Column(JSONB, nullable=True)
-    owned_avator_nfts = db.Column(JSONB, nullable=False, default=lambda: [])
-    owned_rod_nfts = db.Column(JSONB, nullable=False, default=lambda: [])
+    owned_avator_nfts = db.Column(JSONB, nullable=False, default=[])
+    owned_rod_nfts = db.Column(JSONB, nullable=False, default=[])
     fishing_count = db.Column(db.Integer, nullable=False, default=0)
     next_recovery_time = db.Column(db.DateTime(timezone=True), nullable=True)
-    accessible_fishing_grounds = db.Column(db.ARRAY(db.Integer), nullable=False, default=lambda: [])
+    accessible_fishing_grounds = db.Column(db.ARRAY(db.Integer), nullable=False, default=[])
     current_fishing_ground = db.Column(db.Integer, nullable=True)
     remaining_qte_count = db.Column(db.Integer, nullable=False, default=0)
     accumulated_qte_score = db.Column(db.Integer, nullable=False, default=0)
@@ -26,4 +26,123 @@ class User(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 
-# Add other models (LevelExperience, FishingRodConfig, etc.) here...
+class FishingSession(db.Model):
+    __tablename__ = 'fishing_sessions'
+
+    session_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), nullable=False)
+    start_time = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    end_time = db.Column(db.DateTime(timezone=True), nullable=True)
+    session_status = db.Column(db.Boolean, nullable=False, default=True)
+    fishing_count_deducted = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class LevelExperience(db.Model):
+    __tablename__ = 'level_experience'
+
+    user_level = db.Column(db.Integer, primary_key=True)
+    max_exp = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class FishingRodConfig(db.Model):
+    __tablename__ = 'fishing_rod_configs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name_chinese = db.Column(db.Text, nullable=False)
+    name_english = db.Column(db.Text, nullable=False)
+    image = db.Column(db.Text, nullable=False)
+    rarity = db.Column(db.Text, nullable=False)
+    max_supply = db.Column(db.Integer, nullable=False, default=0)
+    battle_skill_desc_cn = db.Column(db.Text)
+    battle_skill_desc_en = db.Column(db.Text)
+    qte_count = db.Column(db.Integer, nullable=False, default=0)
+    green_qte_progress = db.Column(db.Integer, nullable=False, default=0)
+    red_qte_progress = db.Column(db.Integer, nullable=False, default=0)
+    qte_skill_desc_cn = db.Column(db.Text)
+    qte_skill_desc_en = db.Column(db.Text)
+    qte_progress_change = db.Column(db.Integer, nullable=False, default=0)
+    consecutive_hit_bonus = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class FishingGroundConfig(db.Model):
+    __tablename__ = 'fishing_ground_configs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name_chinese = db.Column(db.Text, nullable=False)
+    name_english = db.Column(db.Text, nullable=False)
+    res = db.Column(db.Text, nullable=False)
+    enter_lv = db.Column(db.Integer, nullable=False, default=1)
+    per = db.Column(db.Numeric(5, 2), nullable=False, default=0.00)
+    qulity_per_blue = db.Column(db.Integer, nullable=False, default=0)
+    qulity_per_purple = db.Column(db.Integer, nullable=False, default=0)
+    qulity_per_gold = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class Fish(db.Model):
+    __tablename__ = 'fishes'
+
+    fish_id = db.Column(db.Text, primary_key=True)
+    fish_name = db.Column(db.Text, nullable=False)
+    fish_picture_res = db.Column(db.Text, nullable=False)
+    rarity_id = db.Column(db.Integer, nullable=False)
+    fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
+    fishing_ground_name = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Integer, nullable=False, default=0)
+    output = db.Column(db.Integer, nullable=False, default=0)
+    min_weight = db.Column(db.Float, nullable=False, default=0.0)
+    max_weight = db.Column(db.Float, nullable=False, default=0.0)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class FishingRecord(db.Model):
+    __tablename__ = 'fishing_records'
+
+    record_id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), nullable=False)
+    fish_id = db.Column(db.Text, db.ForeignKey('fishes.fish_id'), nullable=False)
+    fish_name = db.Column(db.Text, nullable=False)
+    fish_picture_res = db.Column(db.Text, nullable=False)
+    rarity_id = db.Column(db.Integer, nullable=False)
+    fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
+    fishing_ground_name = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Integer, nullable=False, default=0)
+    output = db.Column(db.Integer, nullable=False, default=0)
+    weight = db.Column(db.Float, nullable=False, default=0.0)
+    caught_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class FreeMintRecord(db.Model):
+    __tablename__ = 'free_mint_records'
+
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), primary_key=True)
+    avator_minted = db.Column(db.Boolean, nullable=False, default=False)
+    rod_minted = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+
+class SystemConfig(db.Model):
+    __tablename__ = 'system_configs'
+
+    config_key = db.Column(db.Text, primary_key=True)
+    config_value = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class RarityDetermination(db.Model):
+    __tablename__ = 'rarity_determination'
+
+    id = db.Column(db.Integer, primary_key=True)
+    fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
+    qte_min = db.Column(db.Integer, nullable=False)
+    qte_max = db.Column(db.Integer, nullable=False)
+    possible_rarity_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
+    appearance_probabilities = db.Column(db.ARRAY(db.Numeric(5, 2)), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+# Add other models as needed
