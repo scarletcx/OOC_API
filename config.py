@@ -18,11 +18,12 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
     # 游戏配置
-    MAX_FISHING_COUNT = int(os.getenv('MAX_FISHING_COUNT', 5))
-    FISHING_RECOVERY_INTERVAL = int(os.getenv('FISHING_RECOVERY_INTERVAL', 3600))
-    FISHING_EXP = int(os.getenv('FISHING_EXP', 10))
-    MAX_BUY_BAIT = int(os.getenv('MAX_BUY_BAIT', 100))
-    BAIT_PRICE = float(os.getenv('BAIT_PRICE', 10.5))
+    MAX_FISHING_COUNT = 10
+    FISHING_RECOVERY_INTERVAL = 10800
+    FISHING_EXP = 5
+    MAX_BUY_BAIT = 99
+    BAIT_PRICE = 5.0
+    FISHING_BAIT_COST = 1
 
     # 其他配置项可以在这里添加
     # ...

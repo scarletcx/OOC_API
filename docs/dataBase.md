@@ -103,7 +103,8 @@
 | name_chinese | TEXT | 否 | - | 鱼竿中文名字 |
 | name_english | TEXT | 否 | - | 鱼竿英文名字 |
 | image | TEXT | 否 | - | 鱼竿形象 |
-| rarity | TEXT | 否 | - | 稀有度 |
+| quality_name | TEXT | 否 | - | 品质名称 |
+| quality | INTEGER | 否 | - | 品质等级 |
 | max_supply | INTEGER | 否 | 0 | 最大供应数量 |
 | battle_skill_desc_cn | TEXT | 是 | NULL | fishing_battle_skill中文描述 |
 | battle_skill_desc_en | TEXT | 是 | NULL | fishing_battle_skill英文描述 |
@@ -126,10 +127,10 @@
 | name_english | TEXT | 否 | - | 渔场英文名称 |
 | res | TEXT | 否 | - | 图片资源路径 |
 | enter_lv | INTEGER | 否 | 1 | 进入所需等级 |
-| per | NUMERIC(5,2) | 否 | 0.00 | PassCard出现概率 (%) |
-| qulity_per_blue | INTEGER | 否 | 0 | PassCard蓝色品质概率 |
-| qulity_per_purple | INTEGER | 否 | 0 | PassCard紫色品质概率 |
-| qulity_per_gold | INTEGER | 否 | 0 | PassCard金色品质概率 |
+| passcard_appearance_rate | NUMERIC(5,2) | 否 | 0.00 | PassCard出现概率 (%) |
+| passcard_blue_rate | NUMERIC(5,2) | 否 | 0.00 | 蓝色PassCard出现概率 (%) |
+| passcard_purple_rate | NUMERIC(5,2) | 否 | 0.00 | 紫色PassCard出现概率 (%) |
+| passcard_gold_rate | NUMERIC(5,2) | 否 | 0.00 | 金色PassCard出现概率 (%) |
 | created_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录创建时间 |
 | updated_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录更新时间 |
 
