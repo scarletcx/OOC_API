@@ -1,31 +1,13 @@
-from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig
+from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig, LevelExperience, FishingGroundConfig
 from app import db
 from sqlalchemy import func
 import random
 from flask import jsonify
+import uuid
+from decimal import Decimal
+import numpy as np
 
-def init_fishing_session(data):
-    user_id = data.get('user_id')
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
-
-    if user.fishing_count <= 0:
-        return jsonify({'status': 1, 'message': 'Insufficient fishing count'}), 400
-
-    session = FishingSession(user_id=user_id)
-    db.session.add(session)
-    db.session.commit()
-
-    return jsonify({
-        'status': 0,
-        'message': 'success',
-        'data': {
-            'user_baits': user.user_baits,
-            'session_id': str(session.session_id)
-        }
-    })
-
+#3.8 QTE初始化/QTE剩余次数和分数接口函数
 def handle_qte(data):
     user_id = data.get('user_id')
     action_type = data.get('action_type')
@@ -95,6 +77,7 @@ def process_qte(user, qte_colour):
         }
     })
 
+#4.1 获鱼信息接口函数
 def get_fish_info(data):
     user_id = data.get('user_id')
     session_id = data.get('session_id')
@@ -116,11 +99,11 @@ def get_fish_info(data):
     if not rarity_determination:
         return jsonify({'status': 1, 'message': 'Unable to determine fish rarity'}), 500
 
-    rarity_id = random.choices(
+    rarity_id = int(np.random.choice(
         rarity_determination.possible_rarity_ids,
-        weights=rarity_determination.appearance_probabilities,
-        k=1
-    )[0]
+        p=[float(prob) for prob in rarity_determination.appearance_probabilities],
+        size=1
+    )[0])  # 将 numpy.int32 转换为 Python int
 
     fish = Fish.query.filter_by(
         rarity_id=rarity_id,
@@ -130,7 +113,7 @@ def get_fish_info(data):
     if not fish:
         return jsonify({'status': 1, 'message': 'No fish found for the given criteria'}), 500
 
-    weight = random.uniform(fish.min_weight, fish.max_weight)
+    weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
 
     fishing_record = FishingRecord(
         user_id=user_id,
@@ -157,16 +140,22 @@ def get_fish_info(data):
             'rarity_id': fish.rarity_id,
             'fishing_ground_id': fish.fishing_ground_id,
             'fishing_ground_name': fish.fishing_ground_name,
-            'price': fish.price,
-            'output': fish.output,
-            'weight': round(weight, 2)
+            'price': str(fish.price),
+            'output': str(fish.output),
+            'weight': str(round(weight, 2))
         }
     })
 
+#3.6 鱼饵购买界面状态接口函数
 def get_bait_buy_state(user_id):
+    try:
+        user_id = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
+
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
+        return jsonify({'status': 1, 'message': '未找到用户'}), 404
 
     max_buy_bait = SystemConfig.query.get('max_buy_bait')
     bait_price = SystemConfig.query.get('bait_price')
@@ -176,10 +165,11 @@ def get_bait_buy_state(user_id):
         'message': 'success',
         'data': {
             'max_buy_bait': int(max_buy_bait.config_value),
-            'bait_price': float(bait_price.config_value)
+            'bait_price': str(Decimal(bait_price.config_value))
         }
     })
 
+#3.7 购买鱼饵接口函数
 def buy_bait(data):
     user_id = data.get('user_id')
     buy_amount = data.get('buy_amount')
@@ -188,8 +178,8 @@ def buy_bait(data):
     if not user:
         return jsonify({'status': 1, 'message': 'User not found'}), 404
 
-    bait_price = float(SystemConfig.query.get('bait_price').config_value)
-    total_price = bait_price * buy_amount
+    bait_price = Decimal(SystemConfig.query.get('bait_price').config_value)
+    total_price = bait_price * Decimal(buy_amount)
 
     if user.user_gmc < total_price:
         return jsonify({'status': 1, 'message': 'Insufficient GMC for purchase'}), 400
@@ -203,6 +193,6 @@ def buy_bait(data):
         'message': 'success',
         'data': {
             'user_baits': user.user_baits,
-            'user_gmc': float(user.user_gmc)
+            'user_gmc': str(user.user_gmc)
         }
     })

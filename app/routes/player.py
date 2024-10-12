@@ -3,12 +3,17 @@
 
 from app.routes import bp
 from flask import jsonify, request
-from app.services import player_service, fishing_service, nft_service
+from app.services import player_service
 
-@bp.route('/app/v1/fishing', methods=['GET'])
-def fishing_preparation():
-    user_id = request.args.get('user_id')
+#3.1 钓鱼准备界面状态（初始化）接口
+@bp.route('/app/v1/fishing', methods=['POST'])
+def get_fishing_preparation():
+    data = request.json
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({'status': 1, 'message': '缺少user_id参数'}), 400
     return player_service.get_fishing_preparation(user_id)
+
 
 @bp.route('/app/v1/game/entercheck', methods=['POST'])
 def game_enter_check():
@@ -22,10 +27,45 @@ def change_fishing_ground():
 
 @bp.route('/app/v1/player/status', methods=['POST'])
 def player_status():
-    data = request.json
-    return player_service.get_player_status(data)
+    """
+    钓鱼次数回复倒计时及钓鱼操作接口
 
+    此接口用于获取玩家当前的钓鱼次数和下一次恢复时间，以及执行钓鱼操作。
+
+    请求参数:
+    - user_id: 玩家ID (UUID格式)
+    - action_type: 操作类型 (0: 查询, 1: 钓鱼（次数减一）, 2: 次数加一)
+    - session_id: 钓鱼会话的唯一ID（仅当action_type为1时需要）
+
+    返回:
+    - 包含玩家钓鱼次数和下一次恢复时间的JSON响应
+    """
+    data = request.json
+    return player_service.handle_player_status(data)
+
+#3.9 等级经验数据接口
 @bp.route('/app/v1/player/exp', methods=['POST'])
 def update_player_exp():
     data = request.json
     return player_service.update_player_exp(data)
+
+#3.5 钓鱼会话初始化接口
+@bp.route('/app/v1/fishing/init', methods=['POST'])
+def init_fishing_session():
+    """
+    钓鱼会话初始化接口
+
+    此接口用于初始化钓鱼会话，检查玩家是否有足够的钓鱼次数，并创建新的钓鱼会话。
+
+    请求参数:
+    - user_id: 玩家ID (UUID格式)
+
+    返回:
+    - 包含会话ID和玩家当前鱼饵数量的JSON响应
+    """
+    data = request.json
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({'status': 1, 'message': '缺少user_id参数'}), 400
+    
+    return player_service.init_fishing_session(user_id)

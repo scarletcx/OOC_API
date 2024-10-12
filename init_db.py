@@ -1,11 +1,12 @@
 import logging
 import os
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from app import create_app, db
-from app.models import User, LevelExperience, FishingRodConfig, FishingGroundConfig, SystemConfig
+from app.models import User, LevelExperience, FishingRodConfig, FishingGroundConfig, SystemConfig, RarityDetermination, Fish
 from config import Config
 
 # 删除这行
@@ -147,108 +148,108 @@ def init_db():
             if FishingRodConfig.query.count() == 0:
                 rods = [
                     FishingRodConfig(
-                        id=1, 
-                        name_chinese='Classic Woodgrain', 
-                        name_english='Classic Woodgrain', 
-                        image='Classic Woodgrain.png', 
-                        quality_name='白', 
+                        id=1,
+                        name_chinese='木纹经典鱼竿',
+                        name_english='Classic Woodgrain',
+                        image='Classic Woodgrain.png',
+                        quality_name='白',
                         quality=1,
                         max_supply=8000,
                         battle_skill_desc_cn='普通的钓鱼佬，勤学苦练中',
                         battle_skill_desc_en='An ordinary fisherman, diligently practicing.',
                         qte_count=4,
                         green_qte_progress=20,
-                        red_qte_progress=20,
-                        qte_skill_desc_cn='平平无奇的普通',
+                        red_qte_progress=40,
+                        qte_skill_desc_cn='平平无奇的鱼竿',
                         qte_skill_desc_en='Plain Fishing Rod',
                         qte_progress_change=0,
                         consecutive_hit_bonus=0
                     ),
                     FishingRodConfig(
-                        id=2, 
-                        name_chinese='Deep Sea Song', 
-                        name_english='Deep Sea Song', 
-                        image='Deep Sea Song.png', 
-                        quality_name='蓝', 
+                        id=2,
+                        name_chinese='深海之歌鱼竿',
+                        name_english='Deep Sea Song',
+                        image='Deep Sea Song.png',
+                        quality_name='绿',
                         quality=2,
                         max_supply=7000,
-                        battle_skill_desc_cn='初阶钓鱼佬才有',
-                        battle_skill_desc_en='Initial backpack skill',
+                        battle_skill_desc_cn='初始背包格子+1',
+                        battle_skill_desc_en='Initial Backpack Slots +1',
                         qte_count=4,
                         green_qte_progress=20,
-                        red_qte_progress=20,
-                        qte_skill_desc_cn='平平无奇的普通',
+                        red_qte_progress=40,
+                        qte_skill_desc_cn='平平无奇的鱼竿',
                         qte_skill_desc_en='Plain Fishing Rod',
                         qte_progress_change=0,
                         consecutive_hit_bonus=0
                     ),
                     FishingRodConfig(
-                        id=3, 
-                        name_chinese='Alien White', 
-                        name_english='Alien White', 
-                        image='Alien White.png', 
-                        quality_name='紫', 
+                        id=3,
+                        name_chinese='白银之翼鱼竿',
+                        name_english='Silver Wing',
+                        image='Silver Wing.png',
+                        quality_name='蓝',
                         quality=3,
                         max_supply=6000,
-                        battle_skill_desc_cn='高阶钓鱼佬的标配',
-                        battle_skill_desc_en='Hot Action Goldfish: Heal and attack based on the number of pet types owned.',
-                        qte_count=4,
-                        green_qte_progress=30,
-                        red_qte_progress=30,
-                        qte_skill_desc_cn='qte命中率+15%',
-                        qte_skill_desc_en='QTE Accuracy Bonus +15%',
-                        qte_progress_change=15,
+                        battle_skill_desc_cn='宠物冷却降低1%',
+                        battle_skill_desc_en='Pet Action Cooldown Reduced by 1%',
+                        qte_count=5,
+                        green_qte_progress=20,
+                        red_qte_progress=40,
+                        qte_skill_desc_cn='qte次数+1',
+                        qte_skill_desc_en='QTE Attempts +1',
+                        qte_progress_change=0,
                         consecutive_hit_bonus=0
                     ),
                     FishingRodConfig(
-                        id=4, 
-                        name_chinese='Emerald Light', 
-                        name_english='Emerald Light', 
-                        image='Emerald Light.png', 
-                        quality_name='金', 
+                        id=4,
+                        name_chinese='翡翠之光鱼竿',
+                        name_english='Emerald Light',
+                        image='Emerald Light.png',
+                        quality_name='紫',
                         quality=4,
                         max_supply=5000,
-                        battle_skill_desc_cn='高阶钓鱼佬的标配',
-                        battle_skill_desc_en='Hot Action Goldfish: Heal and attack based on the number of pet types owned.',
+                        battle_skill_desc_cn='根据拥有宠物类型数量提高全体1%生命值和攻击力',
+                        battle_skill_desc_en='Increase all 1% health and attack based on the number of pet types owned.',
                         qte_count=4,
                         green_qte_progress=35,
-                        red_qte_progress=35,
-                        qte_skill_desc_cn='qte命中率+15%',
-                        qte_skill_desc_en='QTE Accuracy Bonus +15%',
+                        red_qte_progress=55,
+                        qte_skill_desc_cn='qte的进度值+15',
+                        qte_skill_desc_en='QTE Progress Bonus: +15',
                         qte_progress_change=15,
                         consecutive_hit_bonus=0
                     ),
                     FishingRodConfig(
-                        id=5, 
-                        name_chinese='Rainbow Dance', 
-                        name_english='Rainbow Dance', 
-                        image='Rainbow Dance.png', 
-                        quality_name='彩', 
+                        id=5,
+                        name_chinese='彩虹之舞鱼竿',
+                        name_english='Rainbow Dance',
+                        image='Rainbow Dance.png',
+                        quality_name='橙',
                         quality=5,
-                        max_supply=1000,
-                        battle_skill_desc_cn='高阶钓鱼佬的标配，暴击率溢出20%转化为暴击伤害',
-                        battle_skill_desc_en='Advanced fisherman\'s standard, 20% crit rate overflow converted to crit damage',
-                        qte_count=4,
+                        max_supply=4000,
+                        battle_skill_desc_cn='每溢出5%暴击率可以转化为1%暴击伤害',
+                        battle_skill_desc_en='For every 5% critical rate overflow, you gain 1% critical damage.',
+                        qte_count=3,
                         green_qte_progress=60,
-                        red_qte_progress=60,
-                        qte_skill_desc_cn='qte连续命中进度值+40，暴击伤害+40%',
-                        qte_skill_desc_en='QTE Consecutive Hit Progress +40, Critical Damage +40%',
-                        qte_progress_change=0,
-                        consecutive_hit_bonus=40
+                        red_qte_progress=80,
+                        qte_skill_desc_cn='qte次数-1，但是qte进度值+40',
+                        qte_skill_desc_en='QTE Attempts -1, but QTE Progress +40',
+                        qte_progress_change=40,
+                        consecutive_hit_bonus=0
                     ),
                     FishingRodConfig(
-                        id=6, 
-                        name_chinese='Flame Heart', 
-                        name_english='Flame Heart', 
-                        image='Flame Heart.png', 
-                        quality_name='彩', 
+                        id=6,
+                        name_chinese='烈焰之心鱼竿',
+                        name_english='Flame Heart',
+                        image='Flame Heart.png',
+                        quality_name='彩',
                         quality=6,
                         max_supply=500,
-                        battle_skill_desc_cn='品质最高的钓鱼佬装备，暴击率100%',
-                        battle_skill_desc_en='Master of the roulette wheel, gains 100% free spin per day.',
+                        battle_skill_desc_cn='战斗能量恢复速度提高100%',
+                        battle_skill_desc_en='Master of the roulette wheel, gains 100% free spins per day.',
                         qte_count=4,
                         green_qte_progress=20,
-                        red_qte_progress=20,
+                        red_qte_progress=40,
                         qte_skill_desc_cn='qte连续命中进度值+40',
                         qte_skill_desc_en='QTE Combo Progress +40',
                         qte_progress_change=0,
@@ -257,6 +258,126 @@ def init_db():
                 ]
                 db.session.add_all(rods)
                 logger.info("鱼竿配置已初始化")
+
+            # 初始化稀有度决定表
+            if RarityDetermination.query.count() == 0:
+                rarity_determinations = [
+                    RarityDetermination(fishing_ground_id=1001, qte_min=0, qte_max=160, possible_rarity_ids=[1, 2, 3], appearance_probabilities=[0.50, 0.45, 0.05]),
+                    RarityDetermination(fishing_ground_id=1001, qte_min=161, qte_max=200, possible_rarity_ids=[1, 2, 3], appearance_probabilities=[0.50, 0.40, 0.10]),
+                    RarityDetermination(fishing_ground_id=1001, qte_min=201, qte_max=220, possible_rarity_ids=[1, 2, 3, 4], appearance_probabilities=[0.37, 0.50, 0.10, 0.03]),
+                    RarityDetermination(fishing_ground_id=1001, qte_min=221, qte_max=240, possible_rarity_ids=[2, 3, 4], appearance_probabilities=[0.45, 0.40, 0.15]),
+                    RarityDetermination(fishing_ground_id=1001, qte_min=241, qte_max=280, possible_rarity_ids=[2, 3, 4], appearance_probabilities=[0.30, 0.50, 0.20]),
+                    RarityDetermination(fishing_ground_id=1002, qte_min=0, qte_max=160, possible_rarity_ids=[1, 2, 3, 4], appearance_probabilities=[0.52, 0.30, 0.15, 0.03]),
+                    RarityDetermination(fishing_ground_id=1002, qte_min=161, qte_max=200, possible_rarity_ids=[1, 2, 3, 4], appearance_probabilities=[0.50, 0.30, 0.15, 0.05]),
+                    RarityDetermination(fishing_ground_id=1002, qte_min=201, qte_max=220, possible_rarity_ids=[2, 3, 4], appearance_probabilities=[0.35, 0.50, 0.15]),
+                    RarityDetermination(fishing_ground_id=1002, qte_min=221, qte_max=240, possible_rarity_ids=[2, 3, 4, 5], appearance_probabilities=[0.37, 0.40, 0.20, 0.03]),
+                    RarityDetermination(fishing_ground_id=1002, qte_min=241, qte_max=280, possible_rarity_ids=[2, 3, 4, 5], appearance_probabilities=[0.32, 0.40, 0.20, 0.08]),
+                    RarityDetermination(fishing_ground_id=1003, qte_min=0, qte_max=160, possible_rarity_ids=[1, 2, 3], appearance_probabilities=[0.50, 0.30, 0.20]),
+                    RarityDetermination(fishing_ground_id=1003, qte_min=161, qte_max=200, possible_rarity_ids=[1, 2, 3, 4], appearance_probabilities=[0.30, 0.40, 0.20, 0.10]),
+                    RarityDetermination(fishing_ground_id=1003, qte_min=201, qte_max=220, possible_rarity_ids=[2, 3, 4], appearance_probabilities=[0.40, 0.50, 0.10]),
+                    RarityDetermination(fishing_ground_id=1003, qte_min=221, qte_max=240, possible_rarity_ids=[2, 3, 4, 5], appearance_probabilities=[0.30, 0.40, 0.20, 0.10]),
+                    RarityDetermination(fishing_ground_id=1003, qte_min=241, qte_max=280, possible_rarity_ids=[3, 4, 5, 6], appearance_probabilities=[0.30, 0.40, 0.20, 0.10])
+                ]
+                db.session.add_all(rarity_determinations)
+                logger.info("稀有度决定表已初始化")
+
+            # 初始化鱼类表
+            if Fish.query.count() == 0:
+                fishes = [
+                    Fish(fish_id='4001', fish_name='Bronzeblade', fish_picture_res='Bronzeblade', rarity_id=1, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4002', fish_name='Copperfin', fish_picture_res='Copperfin', rarity_id=1, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4003', fish_name='Emeraldeye', fish_picture_res='Emeraldeye', rarity_id=1, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4004', fish_name='Lavendergaze', fish_picture_res='Lavendergaze', rarity_id=1, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4005', fish_name='Magenta', fish_picture_res='Magenta', rarity_id=1, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4006', fish_name='Rainbowtail', fish_picture_res='Rainbowtail', rarity_id=1, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4007', fish_name='Rosegold', fish_picture_res='Rosegold', rarity_id=1, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4008', fish_name='Shadowfin', fish_picture_res='Shadowfin', rarity_id=1, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4009', fish_name='Sunsetglow', fish_picture_res='Sunsetglow', rarity_id=1, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4010', fish_name='Twilight', fish_picture_res='Twilight', rarity_id=1, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4011', fish_name='Cherrywave', fish_picture_res='Cherrywave', rarity_id=2, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4012', fish_name='Citrusfin', fish_picture_res='Citrusfin', rarity_id=2, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4013', fish_name='Cosmofish', fish_picture_res='Cosmofish', rarity_id=2, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4014', fish_name='Fireflash', fish_picture_res='Fireflash', rarity_id=2, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=200, output=1, min_weight=0.8, max_weight=1.2),
+                    Fish(fish_id='4015', fish_name='Flarefin', fish_picture_res='Flarefin', rarity_id=2, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4016', fish_name='Galaxyfin', fish_picture_res='Galaxyfin', rarity_id=2, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4017', fish_name='Lavender', fish_picture_res='Lavender', rarity_id=2, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4018', fish_name='Lemonwave', fish_picture_res='Lemonwave', rarity_id=2, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4019', fish_name='Pinkfrost', fish_picture_res='Pinkfrost', rarity_id=2, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4020', fish_name='Seagrass', fish_picture_res='Seagrass', rarity_id=2, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4021', fish_name='Starbloom', fish_picture_res='Starbloom', rarity_id=2, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4022', fish_name='Sunstripe', fish_picture_res='Sunstripe', rarity_id=2, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4023', fish_name='Violetwave', fish_picture_res='Violetwave', rarity_id=2, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4024', fish_name='Amberstripe', fish_picture_res='Amberstripe', rarity_id=3, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4025', fish_name='Amethyst', fish_picture_res='Amethyst', rarity_id=3, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4026', fish_name='Goldenrod', fish_picture_res='Goldenrod', rarity_id=3, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=300, output=2, min_weight=1.5, max_weight=2.0),
+                    Fish(fish_id='4027', fish_name='Lemonburst', fish_picture_res='Lemonburst', rarity_id=3, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4028', fish_name='Nebulafish', fish_picture_res='Nebulafish', rarity_id=3, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4029', fish_name='Pinkwave', fish_picture_res='Pinkwave', rarity_id=3, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4030', fish_name='Rosetide', fish_picture_res='Rosetide', rarity_id=3, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4031', fish_name='Solarfin', fish_picture_res='Solarfin', rarity_id=3, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4032', fish_name='Starlight', fish_picture_res='Starlight', rarity_id=3, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4033', fish_name='Sunbeam', fish_picture_res='Sunbeam', rarity_id=3, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4034', fish_name='Violetfin', fish_picture_res='Violetfin', rarity_id=3, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=1000, output=5, min_weight=4.5, max_weight=6.0),
+                    Fish(fish_id='4035', fish_name='Blueberry', fish_picture_res='Blueberry', rarity_id=4, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=2000, output=10, min_weight=9.0, max_weight=12.0),
+                    Fish(fish_id='4036', fish_name='Candyfish', fish_picture_res='Candyfish', rarity_id=4, fishing_ground_id=1001, fishing_ground_name='夏日海滩钓鱼场', price=2000, output=10, min_weight=9.0, max_weight=12.0),
+                    Fish(fish_id='4037', fish_name='Confetti', fish_picture_res='Confetti', rarity_id=4, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=2000, output=10, min_weight=9.0, max_weight=12.0),
+                    Fish(fish_id='4038', fish_name='Marshmallow', fish_picture_res='Marshmallow', rarity_id=4, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=2000, output=10, min_weight=9.0, max_weight=12.0),
+                    Fish(fish_id='4039', fish_name='Pastelwave', fish_picture_res='Pastelwave', rarity_id=4, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=5000, output=20, min_weight=18.8, max_weight=26.6),
+                    Fish(fish_id='4040', fish_name='Purpleswirl', fish_picture_res='Purpleswirl', rarity_id=4, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=5000, output=20, min_weight=19.8, max_weight=27.6),
+                    Fish(fish_id='4041', fish_name='Tangerine', fish_picture_res='Tangerine', rarity_id=4, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=5000, output=20, min_weight=20.8, max_weight=28.6),
+                    Fish(fish_id='4042', fish_name='Blushfin', fish_picture_res='Blushfin', rarity_id=5, fishing_ground_id=1002, fishing_ground_name='赛博朋克钓鱼场', price=5000, output=20, min_weight=21.8, max_weight=29.6),
+                    Fish(fish_id='4044', fish_name='Periwinkle', fish_picture_res='Periwinkle', rarity_id=5, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=5000, output=20, min_weight=23.8, max_weight=31.6),
+                    Fish(fish_id='4045', fish_name='Aquaedge', fish_picture_res='Aquaedge', rarity_id=6, fishing_ground_id=1003, fishing_ground_name='克苏鲁钓鱼场', price=5000, output=20, min_weight=24.8, max_weight=32.6),
+                ]
+                db.session.add_all(fishes)
+                logger.info("鱼类表已初始化")
+
+            # 初始化测试用户
+            if User.query.count() == 0:
+                test_users = [
+                    User(
+                        user_id=uuid.uuid4(),
+                        user_level=1,
+                        user_exp=0,
+                        user_gmc=1000,
+                        user_baits=50,
+                        current_avator_nft={"tokenId": "NFT#00001", "avatorId": 1},
+                        current_rod_nft={"tokenId": "NFT#00002", "rodId": 1},
+                        owned_avator_nfts=[{"tokenId": "NFT#00001", "avatorId": 1}],
+                        owned_rod_nfts=[{"tokenId": "NFT#00002", "rodId": 1}],
+                        fishing_count=Config.MAX_FISHING_COUNT,
+                    ),
+                    User(
+                        user_id=uuid.uuid4(),
+                        user_level=5,
+                        user_exp=25,
+                        user_gmc=5000,
+                        user_baits=100,
+                        current_avator_nft={"tokenId": "NFT#00003", "avatorId": 2},
+                        current_rod_nft={"tokenId": "NFT#00004", "rodId": 2},
+                        owned_avator_nfts=[{"tokenId": "NFT#00003", "avatorId": 2}],
+                        owned_rod_nfts=[{"tokenId": "NFT#00004", "rodId": 2}],
+                        fishing_count=Config.MAX_FISHING_COUNT,
+                    ),
+                    User(
+                        user_id=uuid.uuid4(),
+                        user_level=10,
+                        user_exp=30,
+                        user_gmc=10000,
+                        user_baits=200,
+                        current_avator_nft={"tokenId": "NFT#00005", "avatorId": 3},
+                        current_rod_nft={"tokenId": "NFT#00006", "rodId": 3},
+                        owned_avator_nfts=[{"tokenId": "NFT#00005", "avatorId": 3}],
+                        owned_rod_nfts=[{"tokenId": "NFT#00006", "rodId": 3}],
+                        fishing_count=Config.MAX_FISHING_COUNT,
+                    )
+                ]
+                db.session.add_all(test_users)
+                logger.info("测试用户已初始化")
+
+                # 打印测试用户的 user_id
+                for user in test_users:
+                    logger.info(f"测试用户 ID: {user.user_id}")
 
             db.session.commit()
             logger.info("数据库初始化完成")

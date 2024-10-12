@@ -142,7 +142,7 @@
 
   | 接口名称 | 钓鱼准备界面状态接口                          |
   | -------- | --------------------------------- |
-  | 方法     | GET                               |
+  | 方法     | POST                               |
   | URL      | http://[IP]:[Port]/app/v1/fishing |
 
 - 请求参数
@@ -248,7 +248,7 @@
 
 5. 处理current_fishing_ground：
    a. 如果users表中的current_fishing_ground为null或不在accessible_fishing_grounds列表中：
-      - 将current_fishing_ground设置为accessible_fishing_grounds列表中的第一个渔场ID。
+      - 将current_fishing_ground设置为accessible_fishing_grounds列表中的最后一个渔场ID。
       - 更新users表中的current_fishing_ground字段。
    b. 否则，保持current_fishing_ground不变。
    c. 将current_fishing_ground作为返回数据的一部分。    
@@ -639,8 +639,9 @@
 5. 如果以上任何一个检查失败，立即返回失败响应，并提供相应的错误信息。
 6. 如果所有检查都通过：
    a. 更新数据库中玩家的user_baits，减去fishing_bait_cost。
-   b. 生成一个唯一的会话ID（session_id）。
-   c. 在数据库中创建一个新的钓鱼会话记录，包含以下信息：
+   b. 删除该用户之前的所有会话记录。
+   c. 生成一个唯一的会话ID（session_id）。
+   d. 在数据库中创建一个新的钓鱼会话记录，包含以下信息：
       - user_id
       - session_id
       - 开始时间

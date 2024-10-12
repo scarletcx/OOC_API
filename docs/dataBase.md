@@ -7,15 +7,15 @@
 | user_id | UUID | 否 | gen_random_uuid() | 主键，用户唯一标识符 |
 | user_level | INTEGER | 否 | 1 | 用户等级 |
 | user_exp | INTEGER | 否 | 0 | 用户当前经验值 |
-| user_gmc | NUMERIC(10,4) | 否 | 0 | 用户GMC数量 |
+| user_gmc | NUMERIC(20,8) | 否 | 0 | 用户GMC数量 |
 | user_baits | INTEGER | 否 | 0 | 用户鱼饵数量 |
 | current_avator_nft | JSONB | 是 | NULL | 当前使用的钓手NFT信息 |
 | current_rod_nft | JSONB | 是 | NULL | 当前使用的鱼竿NFT信息 |
 | owned_avator_nfts | JSONB | 否 | '[]' | 拥有的所有钓手NFT信息列表 |
 | owned_rod_nfts | JSONB | 否 | '[]' | 拥有的所有鱼竿NFT信息列表 |
 | fishing_count | INTEGER | 否 | 0 | 当前可用钓鱼次数 |
-| next_recovery_time | TIMESTAMP WITH TIME ZONE | 是 | NULL | 下次钓鱼次数恢复时间 |
-| accessible_fishing_grounds | INTEGER[] | 否 | '{}' | 可进入的渔场ID列表 |
+| next_recovery_time | BIGINT | 是 | NULL | 下次钓鱼次数恢复时间（Unix时间戳） |
+| accessible_fishing_grounds | INTEGER[] | 是 | NULL | 可进入的渔场ID列表 |
 | current_fishing_ground | INTEGER | 是 | NULL | 当前所在渔场ID |
 | remaining_qte_count | INTEGER | 否 | 0 | 剩余QTE次数 |
 | accumulated_qte_score | INTEGER | 否 | 0 | 累计QTE分数 |
@@ -43,9 +43,10 @@
    - 存储用户拥有的所有鱼竿NFT信息
    - 如果用户没有鱼竿NFT，则为空数组 `[]`
 
-5. accessible_fishing_grounds：JSON数组格式，存储整数值
+5. accessible_fishing_grounds：INTEGER数组类型，允许为空
    - 表示用户可以进入的渔场ID列表
-   - 例如：`[1001, 1002, 1003]`
+   - 如果为空，表示用户可以进入所有等级小于等于其当前等级的渔场
+   - 例如：`[1001, 1002, 1003]` 或 `NULL`
 
 6. qte_hit_status_green：存储最近一次绿色QTE的命中状态
    - 0表示未命中，1表示命中
@@ -72,7 +73,7 @@
 
 3. 对于frequently_used_avator_nfts和frequently_used_rod_nfts字段，可以考虑在应用层面实现，而不是在数据库中存储，除非有特定的性能需求。
 
-4. next_recovery_time字段使用timestamp类型，确保在不同时区的一致性。在应用层面应使用UTC时间进行操作。
+4. next_recovery_time字段使用BIGINT类型存储Unix时间戳，表示下次钓鱼次数恢复的时间。在应用层面应使用UTC时间进行操作。
 
 5. 可以考虑为user_id, user_level, user_gmc等频繁查询的字段创建索引，以提高查询性能。
 
@@ -85,6 +86,10 @@
 9. 在更新current_fishing_ground字段时，应确保该渔场ID存在于accessible_fishing_grounds列表中。
 
 10. 在应用层面，当用户切换渔场时，需要同时更新current_fishing_ground字段和相关的游戏状态（如果有的话）。
+
+11. 当 accessible_fishing_grounds 为 NULL 时，应用程序应该动态计算用户可进入的渔场，基于用户的当前等级和渔场的进入等级要求。
+
+12. next_recovery_time字段存储的是Unix时间戳，在进行时间比较和计算时，需要注意将其转换为适当的时间格式。
 
 ## 2. 等级经验表 (level_experience)
 
@@ -144,10 +149,10 @@
 | rarity_id | INTEGER | 否 | - | 稀有度ID |
 | fishing_ground_id | INTEGER | 否 | - | 外键，关联fishing_ground_configs表的id |
 | fishing_ground_name | TEXT | 否 | - | 渔场名称 |
-| price | INTEGER | 否 | 0 | 鱼价 |
-| output | INTEGER | 否 | 0 | 每三小时产币量 |
-| min_weight | REAL | 否 | 0.0 | 最小重量（磅） |
-| max_weight | REAL | 否 | 0.0 | 最大重量（磅） |
+| price | NUMERIC(20,8) | 否 | 0 | 鱼价 |
+| output | NUMERIC(20,8) | 否 | 0 | 每三小时产币量 |
+| min_weight | NUMERIC(10,2) | 否 | 0.0 | 最小重量（磅） |
+| max_weight | NUMERIC(10,2) | 否 | 0.0 | 最大重量（磅） |
 | created_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录创建时间 |
 | updated_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录更新时间 |
 
@@ -188,9 +193,9 @@ EXECUTE FUNCTION update_fishing_ground_name();
 | rarity_id | INTEGER | 否 | - | 钓到的鱼的稀有度等级 |
 | fishing_ground_id | INTEGER | 否 | - | 外键，关联fishing_ground_configs表 |
 | fishing_ground_name | TEXT | 否 | - | 钓到鱼的渔场名称 |
-| price | INTEGER | 否 | 0 | 钓到的鱼的价格 |
-| output | INTEGER | 否 | 0 | 钓到的鱼每三小时产生的币量 |
-| weight | REAL | 否 | 0.0 | 钓到的鱼的重量（磅） |
+| price | NUMERIC(20,8) | 否 | 0 | 钓到的鱼的价格 |
+| output | NUMERIC(20,8) | 否 | 0 | 钓到的鱼每三小时产生的币量 |
+| weight | NUMERIC(10,2) | 否 | 0.0 | 钓到的鱼的重量（磅） |
 | caught_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 钓到鱼的时间 |
 | created_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录创建时间 |
 | updated_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录更新时间 |
@@ -246,7 +251,7 @@ EXECUTE FUNCTION update_fishing_records_updated_at();
 示例配置项：
 1. fishing_recovery_interval: 钓鱼次数恢复间隔（秒）
 2. max_fishing_count: 最大钓鱼次数
-3. bait_price: 鱼饵单价
+3. bait_price: 鱼饵价
 4. max_buy_bait: 单次可购买的最大鱼饵数量
 5. fishing_bait_cost: 单次钓鱼消耗鱼饵数量
 6. fishing_exp: 单次钓鱼增加的经验值
@@ -303,7 +308,7 @@ EXECUTE FUNCTION update_fishing_sessions_updated_at();
 | qte_min | INTEGER | 否 | - | QTE最小值 |
 | qte_max | INTEGER | 否 | - | QTE最大值 |
 | possible_rarity_ids | INTEGER[] | 否 | - | 可能钓到的鱼的稀有度ID数组 |
-| appearance_probabilities | NUMERIC(5,2)[] | 否 | - | 对应的出现概率数组 |
+| appearance_probabilities | NUMERIC(5,4)[] | 否 | - | 对应的出现概率数组 |
 | created_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录创建时间 |
 | updated_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录更新时间 |
 

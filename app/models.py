@@ -8,15 +8,15 @@ class User(db.Model):
     user_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_level = db.Column(db.Integer, nullable=False, default=1)
     user_exp = db.Column(db.Integer, nullable=False, default=0)
-    user_gmc = db.Column(db.Numeric(10, 4), nullable=False, default=0)
+    user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
     user_baits = db.Column(db.Integer, nullable=False, default=0)
     current_avator_nft = db.Column(JSONB, nullable=True)
     current_rod_nft = db.Column(JSONB, nullable=True)
     owned_avator_nfts = db.Column(JSONB, nullable=False, default=[])
     owned_rod_nfts = db.Column(JSONB, nullable=False, default=[])
     fishing_count = db.Column(db.Integer, nullable=False, default=0)
-    next_recovery_time = db.Column(db.DateTime(timezone=True), nullable=True)
-    accessible_fishing_grounds = db.Column(db.ARRAY(db.Integer), nullable=False, default=[])
+    next_recovery_time = db.Column(db.BigInteger, nullable=True)
+    accessible_fishing_grounds = db.Column(db.ARRAY(db.Integer), nullable=True)
     current_fishing_ground = db.Column(db.Integer, nullable=True)
     remaining_qte_count = db.Column(db.Integer, nullable=False, default=0)
     accumulated_qte_score = db.Column(db.Integer, nullable=False, default=0)
@@ -92,10 +92,10 @@ class Fish(db.Model):
     rarity_id = db.Column(db.Integer, nullable=False)
     fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
     fishing_ground_name = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Integer, nullable=False, default=0)
-    output = db.Column(db.Integer, nullable=False, default=0)
-    min_weight = db.Column(db.Float, nullable=False, default=0.0)
-    max_weight = db.Column(db.Float, nullable=False, default=0.0)
+    price = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    output = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    min_weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
+    max_weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 
@@ -110,9 +110,9 @@ class FishingRecord(db.Model):
     rarity_id = db.Column(db.Integer, nullable=False)
     fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
     fishing_ground_name = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Integer, nullable=False, default=0)
-    output = db.Column(db.Integer, nullable=False, default=0)
-    weight = db.Column(db.Float, nullable=False, default=0.0)
+    price = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    output = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     caught_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
@@ -142,7 +142,7 @@ class RarityDetermination(db.Model):
     qte_min = db.Column(db.Integer, nullable=False)
     qte_max = db.Column(db.Integer, nullable=False)
     possible_rarity_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
-    appearance_probabilities = db.Column(db.ARRAY(db.Numeric(5, 2)), nullable=False)
+    appearance_probabilities = db.Column(db.ARRAY(db.Numeric(5, 4)), nullable=False)  # 修改为Numeric
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 
