@@ -6,7 +6,7 @@
 
 ### 前提条件
 
-- Python 3.7+
+- Python 3.9+
 - PostgreSQL
 
 ### 安装步骤
@@ -75,6 +75,72 @@ pip freeze > requirements.txt
 ### 运行测试
 
 （如果有测试的话，在这里添加运行测试的说明）
+
+## docker部署
+
+### 1.更新系统包
+```
+sudo apt update
+sudo apt upgrade -y
+```
+
+### 2.安装必要的依赖
+```
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+```
+
+### 3.安装 Docker
+```
+# 添加 Docker 的官方 GPG 密钥
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+# 添加 Docker 仓库
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+# 更新包索引
+sudo apt update
+
+# 安装 Docker
+sudo apt install -y docker-ce
+
+# 启动 Docker 服务
+sudo systemctl start docker
+
+# 设置 Docker 开机自启
+sudo systemctl enable docker
+
+# 将当前用户添加到 docker 组（这样就不用每次都 sudo 了）
+sudo usermod -aG docker ${USER}
+```
+
+### 4.安装 Docker Compose
+```
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+### 5.在服务器上创建项目目录
+```
+mkdir -p ~/ooc_api
+cd ~/ooc_api
+```
+
+### 6.将项目文件传输到服务器
+
+### 7.在服务器上构建和启动 Docker 容器
+```
+cd ~/ooc_api
+docker-compose up -d
+```
+
+### 8.初始化数据库
+首次运行时，你需要初始化数据库。进入 web 容器并运行初始化脚本：
+```
+docker-compose exec web python init_db.py
+```
+
+### 9.验证部署访问接口
+现在你的应用应该在服务器的 5000 端口上运行。你可以通过浏览器访问 http://your_server_ip:5000 来查看你的应用。
 
 ## 贡献
 
