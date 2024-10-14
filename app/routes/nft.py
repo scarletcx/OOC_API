@@ -8,11 +8,11 @@ def free_mint():
     免费铸造NFT接口
     
     此接口用于处理用户的免费NFT铸造请求。
-    它可以用来铸造钓手(avator)或鱼竿(rod)NFT，也可以查询用户的铸造状态。
+    它可以用来铸造钓手(avatar)或鱼竿(rod)NFT，也可以查询用户的铸造状态。
     
     请求参数:
     - user_id: 用户ID (UUID格式)
-    - type: 铸造类型，可选值为 'avator' 或 'rod'。如果不提供，则查询铸造状态。
+    - type: 铸造类型，可选值为 'avatar' 或 'rod'。如果不提供，则查询铸造状态。
     
     返回:
     - 如果提供了type参数，返回铸造操作的结果
@@ -33,11 +33,11 @@ def change_nft():
     """
     更换当前使用的NFT接口
     
-    此接口用于更换用户当前使用的钓手(avator)或鱼竿(rod)NFT。
+    此接口用于更换用户当前使用的钓手(avatar)或鱼竿(rod)NFT。
     
     请求参数:
     - user_id: 用户ID (UUID格式)
-    - type: NFT类型，可选值为 'avator' 或 'rod'
+    - type: NFT类型，可选值为 'avatar' 或 'rod'
     - nft_token: 要更换的NFT的token ID
     
     返回:

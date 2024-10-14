@@ -25,7 +25,7 @@
 
 #### 2.1.1 功能说明
 
-该接口用于记录和查询玩家是否已经进行过免费mint操作，即记录和查询玩家的avator和rod的mint状态。
+该接口用于记录和查询玩家是否已经进行过免费mint操作，即记录和查询玩家的avatar和rod的mint状态。
 
 #### 2.1.2 详细设计
 
@@ -41,13 +41,13 @@
   | 参数名称 | 参数英文名 | 参数描述                           | 参数类型 | 是否必须 | 参数示例                             |
   | -------- | ---------- | ---------------------------------- | -------- | -------- | ------------------------------------ |
   | 玩家ID   | user_id    | 标识游戏玩家的唯一ID，为32位uuid号 | string   | 是       | 123e4567-e89b-12d3-a456-426614174000 |
-  | 调用参数 | type       | 查询的NFT类型，avator或rod         | string   | 否       | "avator"                             |
+  | 调用参数 | type       | 查询的NFT类型，avatar或rod         | string   | 否       | "avatar"                             |
 
 - 响应参数
 
   | 参数名称       | 参数英文名 | 参数描述                     | 参数类型 | 参数示例 |
   | -------------- | ---------- | ---------------------------- | -------- | -------- |
-  | avator免费mint记录 | avator_minted | 是否已进行过avator免费mint，1是0否 | integer  | 1        |
+  | avatar免费mint记录 | avatar_minted | 是否已进行过avatar免费mint，1是0否 | integer  | 1        |
   | rod免费mint记录    | rod_minted    | 是否已进行过rod免费mint，1是0否    | integer  | 0        |
 
 #### 2.1.3 消息示例
@@ -57,7 +57,7 @@
   ```json
   {
       "user_id": "123e4567-e89b-12d3-a456-426614174000",
-      "type": "avator"
+      "type": "avatar"
   }
   ```
 
@@ -87,7 +87,7 @@
         "status": 0,
         "message": "success",
         "data": {
-            "avator_minted": 1,
+            "avatar_minted": 1,
             "rod_minted": 0
         }
     }
@@ -106,10 +106,10 @@
 
 1. 接收玩家ID作为必须参数，type作为可选参数；
 2. 如果提供了type参数：
-   a. 在数据库中更新指定类型（avator或rod）的免费mint记录,即把免费Mint记录表 (free_mint_records) 中指定user_id的avator_minted或rod_minted记录更新为TRUE；
+   a. 在数据库中更新指定类型（avatar或rod）的免费mint记录,即把免费Mint记录表 (free_mint_records) 中指定user_id的avatar_minted或rod_minted记录更新为TRUE；
    b. 返回操作成功或失败的状态；
 3. 如果没有提供type参数：
-   a. 查询玩家的avator和rod的免费mint记录,即查询免费Mint记录表 (free_mint_records) 中指定user_id的avator_minted和rod_minted记录；
+   a. 查询玩家的avatar和rod的免费mint记录,即查询免费Mint记录表 (free_mint_records) 中指定user_id的avatar_minted和rod_minted记录；
    b. 返回两种类型的mint状态；
 4. 如果查询成功，返回相应的mint状态；
 5. 如果查询失败，返回错误信息。
@@ -163,9 +163,9 @@
   | 返回数据 | data       | 升级所需经验值    | max_exp          | 当前等级升级所需经验值                                       | int      | 65                                           |
   | 返回数据 | data       | GMC数量           | user_gmc         | 玩家当前GMC数量                                              | float    | 520.1314                                     |
   | 返回数据 | data       | 鱼饵数量          | user_baits       | 玩家当前鱼饵数量                                             | int      | 80                                           |
-  | 返回数据 | data       | 玩家使用的钓手NFT | current_avator_nft | 玩家当前使用的<br/>钓手nft信息                                | object   | {"tokenId": "NFT#23189", "avatorId": 1}      |
+  | 返回数据 | data       | 玩家使用的钓手NFT | current_avatar_nft | 玩家当前使用的<br/>钓手nft信息                                | object   | {"tokenId": "NFT#23189", "avatarId": 1}      |
   | 返回数据 | data       | 玩家使用的鱼竿NFT | current_rod_nft  | 玩家当前使用的<br/>鱼竿NFT信息                                | object   | {"tokenId": "NFT#23189", "rodId": 1}         |
-  | 返回数据 | data       | 拥有的所有钓手NFT | owned_avator_nfts | 玩家拥有的所有<br/>钓手NFT信息列表，<br/>未拥有则为空数组     | array    | [{"tokenId": "NFT#23189", "avatorId": 1}, {"tokenId": "NFT#23190", "avatorId": 2}] |
+  | 返回数据 | data       | 拥有的所有钓手NFT | owned_avatar_nfts | 玩家拥有的所有<br/>钓手NFT信息列表，<br/>未拥有则为空数组     | array    | [{"tokenId": "NFT#23189", "avatarId": 1}, {"tokenId": "NFT#23190", "avatarId": 2}] |
   | 返回数据 | data       | 拥有的所有鱼竿NFT | owned_rod_nfts   | 玩家拥有的所有<br/>鱼竿NFT信息列表，<br/>未拥有则为空数组    | array    | [{"tokenId": "NFT#23189", "rodId": 1}, {"tokenId": "NFT#23190", "rodId": 2}] |
   | 返回数据 | data       | 鱼竿Battle Skill  | battle_skill_desc_en | 鱼竿Battle Skill<br/>英文描述                                | string   | An ordinary fisherman,<br>diligently practicing. |
   | 返回数据 | data       | 鱼竿QTE Skill     | qte_skill_desc_en | 鱼竿QTE Skill<br/>英文描述                                   | string   | Plain Fishing Rod                            |
@@ -196,11 +196,11 @@
             "max_exp": 65,
             "user_gmc": 520.1314,
             "user_baits": 80,
-            "current_avator_nft": {"tokenId": "NFT#23189", "avatorId": 1},
+            "current_avatar_nft": {"tokenId": "NFT#23189", "avatarId": 1},
             "current_rod_nft": {"tokenId": "NFT#23189", "rodId": 1},
-            "owned_avator_nfts": [
-                {"tokenId": "NFT#23189", "avatorId": 1},
-                {"tokenId": "NFT#23190", "avatorId": 2}
+            "owned_avatar_nfts": [
+                {"tokenId": "NFT#23189", "avatarId": 1},
+                {"tokenId": "NFT#23190", "avatarId": 2}
             ],
             "owned_rod_nfts": [
                 {"tokenId": "NFT#23189", "rodId": 1},
@@ -231,9 +231,9 @@
    - user_exp（users表）
    - user_gmc（users表）
    - user_baits（users表）
-   - current_avator_nft（users表）
+   - current_avatar_nft（users表）
    - current_rod_nft（users表）
-   - owned_avator_nfts（users表）
+   - owned_avatar_nfts（users表）
    - owned_rod_nfts（users表）
 
 2. 从level_experience表中获取当前等级升级所需的经验值（max_exp）。
@@ -265,9 +265,9 @@
 | max_exp | level_experience | 根据user_level从level_experience表获取 |
 | user_gmc | users | 直接从users表获取 |
 | user_baits | users | 直接从users表获取 |
-| current_avator_nft | users | 直接从users表获取，包含tokenId和avatorId |
+| current_avatar_nft | users | 直接从users表获取，包含tokenId和avatarId |
 | current_rod_nft | users | 直接从users表获取，包含tokenId和rodId |
-| owned_avator_nfts | users | 直接从users表获取，是一个包含多个{tokenId, avatorId}对象的数组 |
+| owned_avatar_nfts | users | 直接从users表获取，是一个包含多个{tokenId, avatarId}对象的数组 |
 | owned_rod_nfts | users | 直接从users表获取，是一个包含多个{tokenId, rodId}对象的数组 |
 | battle_skill_desc_en | fishing_rod_configs | 根据current_rod_nft中的rodId从fishing_rod_configs表获取 |
 | qte_skill_desc_en | fishing_rod_configs | 根据current_rod_nft中的rodId从fishing_rod_configs表获取 |
@@ -301,7 +301,7 @@
   | 参数名称       | 参数英文名      | 参数描述                     | 参数类型 | 参数示例 |
   | -------------- | --------------- | ---------------------------- | -------- | -------- |
   | 是否可进入游戏 | can_enter_game | 是否可以进入游戏的标识       | boolean  | true     |
-  | 钓手NFT       | avator          | 当前使用的钓手NFT token，缺失则为null | string   | NFT#23189 |
+  | 钓手NFT       | avatar          | 当前使用的钓手NFT token，缺失则为null | string   | NFT#23189 |
   | 鱼竿NFT       | rod             | 当前使用的鱼竿NFT token，缺失则为null | string   | NFT#23190 |
 
 #### 3.2.3 消息示例
@@ -324,7 +324,7 @@
         "message": "success",
         "data": {
             "can_enter_game": true,
-            "avator": "NFT#23189",
+            "avatar": "NFT#23189",
             "rod": "NFT#23190"
         }
     }
@@ -338,7 +338,7 @@
         "message": "Missing avatar or fishing rod",
         "data": {
             "can_enter_game": false,
-            "avator": null,
+            "avatar": null,
             "rod": "NFT#23190"
         }
     }
@@ -356,8 +356,8 @@
 #### 3.2.5 注意事项
 
 1. 即使玩家不能进入游戏（can_enter_game 为 false），也应返回玩家拥有的NFT信息。
-2. 失败响应中的 message 统一为 "Missing avatar or fishing rod"，具体缺失情况可以从 data 中的 avator 和 rod 值判断。
-3. 成功响应中也应包含 avator 和 rod 的具体 token 信息，以便客户端使用。
+2. 失败响应中的 message 统一为 "Missing avatar or fishing rod"，具体缺失情况可以从 data 中的 avatar 和 rod 值判断。
+3. 成功响应中也应包含 avatar 和 rod 的具体 token 信息，以便客户端使用。
 
 ### 3.3 改变渔场接口
 
@@ -1049,14 +1049,14 @@
   | 参数名称   | 参数英文名  | 参数描述                           | 参数类型 | 是否必须 | 参数示例                             |
   | ---------- | ----------- | ---------------------------------- | -------- | -------- | ------------------------------------ |
   | 玩家ID     | user_id     | 标识游戏玩家的唯一ID，为32位uuid号 | string   | 是       | 123e4567-e89b-12d3-a456-426614174000 |
-  | 更换类型   | type        | 更换的NFT类型：avator或rod         | string   | 是       | "avator"                             |
+  | 更换类型   | type        | 更换的NFT类型：avatar或rod         | string   | 是       | "avatar"                             |
   | NFT Token  | nft_token   | 要更换的NFT的token                 | string   | 是       | "NFT#12345"                          |
 
 - 响应参数
 
   | 参数名称   | 参数英文名    | 参数描述                     | 参数类型 | 参数示例    |
   | ---------- | ------------- | ---------------------------- | -------- | ----------- |
-  | 更换类型   | type          | 更换的NFT类型：avator或rod   | string   | "avator"    |
+  | 更换类型   | type          | 更换的NFT类型：avatar或rod   | string   | "avatar"    |
   | 新NFT Token| new_nft_token | 更换后的NFT token            | string   | "NFT#12345" |
 
 #### 3.10.3 消息示例
@@ -1066,7 +1066,7 @@
   ```json
   {
       "user_id": "123e4567-e89b-12d3-a456-426614174000",
-      "type": "avator",
+      "type": "avatar",
       "nft_token": "NFT#12345"
   }
   ```
@@ -1090,7 +1090,7 @@
         "status": 0,
         "message": "success",
         "data": {
-            "type": "avator",
+            "type": "avatar",
             "new_nft_token": "NFT#12345"
         }
     }
@@ -1117,7 +1117,7 @@
         "message": "Invalid type",
         "data": {
             "error_code": 2002,
-            "error_message": "Type must be either 'avator' or 'rod'"
+            "error_message": "Type must be either 'avatar' or 'rod'"
         }
     }
     ```
@@ -1125,13 +1125,13 @@
 #### 3.10.4 功能逻辑
 
 1. 接收玩家ID、更换类型和NFT Token作为输入参数。
-2. 验证更换类型是否为 "avator" 或 "rod"，如果不是，返回无效类型的错误响应。
+2. 验证更换类型是否为 "avatar" 或 "rod"，如果不是，返回无效类型的错误响应。
 3. 根据玩家ID和更换类型，从数据库中获取玩家拥有的所有相应类型的NFT列表。
 4. 检查要更换的NFT Token是否在玩家拥有的NFT列表中：
    a. 如果不在列表中，返回NFT不存在的错误响应。
    b. 如果在列表中，继续下一步。
 5. 更新数据库中玩家当前使用的NFT信息：
-   a. 如果type为"avator"，更新玩家当前使用的钓手NFT。
+   a. 如果type为"avatar"，更新玩家当前使用的钓手NFT。
    b. 如果type为"rod"，更新玩家当前使用的鱼竿NFT。
 6. 返回成功响应，包含更新后的NFT信息。
 

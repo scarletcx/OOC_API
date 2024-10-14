@@ -62,9 +62,9 @@ def get_fishing_preparation(user_id):
             'max_exp': level_exp.max_exp,
             'user_gmc': float(user.user_gmc),
             'user_baits': user.user_baits,
-            'current_avator_nft': user.current_avator_nft,
+            'current_avatar_nft': user.current_avatar_nft,
             'current_rod_nft': user.current_rod_nft,
-            'owned_avator_nfts': user.owned_avator_nfts,
+            'owned_avatar_nfts': user.owned_avatar_nfts,
             'owned_rod_nfts': user.owned_rod_nfts,
             'battle_skill_desc_en': current_rod.battle_skill_desc_en if current_rod else None,
             'qte_skill_desc_en': current_rod.qte_skill_desc_en if current_rod else None,
@@ -86,13 +86,13 @@ def check_game_entry(data):
         return jsonify({'status': 1, 'message': '未找到用户'}), 404
 
     # 检查玩家是否同时拥有头像和鱼竿NFT
-    can_enter_game = user.current_avator_nft is not None and user.current_rod_nft is not None
+    can_enter_game = user.current_avatar_nft is not None and user.current_rod_nft is not None
     return jsonify({
         'status': 0,
         'message': '成功',
         'data': {
             'can_enter_game': can_enter_game,
-            'avator': user.current_avator_nft['tokenId'] if user.current_avator_nft else None,
+            'avatar': user.current_avatar_nft['tokenId'] if user.current_avatar_nft else None,
             'rod': user.current_rod_nft['tokenId'] if user.current_rod_nft else None
         }
     })
@@ -287,7 +287,7 @@ def init_fishing_session(user_id):
         return jsonify({'status': 1, 'message': '未找到用户'}), 404
 
     # 1. 检查玩家是否拥有当前使用的钓手NFT和鱼竿NFT
-    if not user.current_avator_nft or not user.current_rod_nft:
+    if not user.current_avatar_nft or not user.current_rod_nft:
         return jsonify({'status': 1, 'message': '玩家缺少必要的NFT'}), 400
 
     # 2. 检查玩家当前钓鱼次数

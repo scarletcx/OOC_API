@@ -10,9 +10,9 @@ class User(db.Model):
     user_exp = db.Column(db.Integer, nullable=False, default=0)
     user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
     user_baits = db.Column(db.Integer, nullable=False, default=0)
-    current_avator_nft = db.Column(JSONB, nullable=True)
+    current_avatar_nft = db.Column(JSONB, nullable=True)
     current_rod_nft = db.Column(JSONB, nullable=True)
-    owned_avator_nfts = db.Column(JSONB, nullable=False, default=[])
+    owned_avatar_nfts = db.Column(JSONB, nullable=False, default=[])
     owned_rod_nfts = db.Column(JSONB, nullable=False, default=[])
     fishing_count = db.Column(db.Integer, nullable=False, default=0)
     next_recovery_time = db.Column(db.BigInteger, nullable=True)
@@ -121,7 +121,7 @@ class FreeMintRecord(db.Model):
     __tablename__ = 'free_mint_records'
 
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), primary_key=True)
-    avator_minted = db.Column(db.Boolean, nullable=False, default=False)
+    avatar_minted = db.Column(db.Boolean, nullable=False, default=False)
     rod_minted = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 

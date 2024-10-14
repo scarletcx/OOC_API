@@ -9,9 +9,9 @@
 | user_exp | INTEGER | 否 | 0 | 用户当前经验值 |
 | user_gmc | NUMERIC(20,8) | 否 | 0 | 用户GMC数量 |
 | user_baits | INTEGER | 否 | 0 | 用户鱼饵数量 |
-| current_avator_nft | JSONB | 是 | NULL | 当前使用的钓手NFT信息 |
+| current_avatar_nft | JSONB | 是 | NULL | 当前使用的钓手NFT信息 |
 | current_rod_nft | JSONB | 是 | NULL | 当前使用的鱼竿NFT信息 |
-| owned_avator_nfts | JSONB | 否 | '[]' | 拥有的所有钓手NFT信息列表 |
+| owned_avatar_nfts | JSONB | 否 | '[]' | 拥有的所有钓手NFT信息列表 |
 | owned_rod_nfts | JSONB | 否 | '[]' | 拥有的所有鱼竿NFT信息列表 |
 | fishing_count | INTEGER | 否 | 0 | 当前可用钓鱼次数 |
 | next_recovery_time | BIGINT | 是 | NULL | 下次钓鱼次数恢复时间（Unix时间戳） |
@@ -27,15 +27,15 @@
 
 ### 字段说明
 
-1. current_avator_nft：JSON格式，存储结构为 `{"tokenId": "NFT#XXXXX", "avatorId": X}`
+1. current_avatar_nft：JSON格式，存储结构为 `{"tokenId": "NFT#XXXXX", "avatarId": X}`
    - tokenId: 字符串，表示NFT的唯一标识符
-   - avatorId: 整数，表示钓手的ID
+   - avatarId: 整数，表示钓手的ID
 
 2. current_rod_nft：JSON格式，存储结构为 `{"tokenId": "NFT#XXXXX", "rodId": X}`
    - tokenId: 字符串，表示NFT的唯一标识符
    - rodId: 整数，表示鱼竿的ID
 
-3. owned_avator_nfts：JSON数组格式，每个元素的结构为 `{"tokenId": "NFT#XXXXX", "avatorId": X}`
+3. owned_avatar_nfts：JSON数组格式，每个元素的结构为 `{"tokenId": "NFT#XXXXX", "avatarId": X}`
    - 存储用户拥有的所有钓手NFT信息
    - 如果用户没有钓手NFT，则为空数组 `[]`
 
@@ -71,7 +71,7 @@
 
 2. 在应用层面，应确保JSON数据的完整性和有效性。
 
-3. 对于frequently_used_avator_nfts和frequently_used_rod_nfts字段，可以考虑在应用层面实现，而不是在数据库中存储，除非有特定的性能需求。
+3. 对于frequently_used_avatar_nfts和frequently_used_rod_nfts字段，可以考虑在应用层面实现，而不是在数据库中存储，除非有特定的性能需求。
 
 4. next_recovery_time字段使用BIGINT类型存储Unix时间戳，表示下次钓鱼次数恢复的时间。在应用层面应使用UTC时间进行操作。
 
@@ -234,7 +234,7 @@ EXECUTE FUNCTION update_fishing_records_updated_at();
 | 字段名 | 类型 | 允许空 | 默认值 | 说明 |
 |--------|------|--------|--------|------|
 | user_id | UUID | 否 | - | 主键，外键，关联users表 |
-| avator_minted | BOOLEAN | 否 | FALSE | 是否已进行过avator免费mint |
+| avatar_minted | BOOLEAN | 否 | FALSE | 是否已进行过avatar免费mint |
 | rod_minted | BOOLEAN | 否 | FALSE | 是否已进行过rod免费mint |
 | created_at | TIMESTAMP WITH TIME ZONE | 否 | CURRENT_TIMESTAMP | 记录创建时间 |
 
