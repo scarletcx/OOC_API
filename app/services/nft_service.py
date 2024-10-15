@@ -3,18 +3,19 @@ from app import db
 from flask import jsonify
 import uuid
 
+#2.1 免费mint&记录接口函数
 def handle_free_mint(user_id, mint_type):
     """
     处理免费NFT铸造请求
     
-    此函数处理用户的免费NFT铸造请求，包括铸造新的NFT和查询铸造状态。
+    此函数处理用户的免费NFT铸造请求。
     
     参数:
     - user_id: 用户ID (UUID格式的字符串)
-    - mint_type: 铸造类型，可选值为 'avatar' 或 'rod'，如果为None则查询状态
+    - mint_type: 铸造类型，可选值为 'avatar' 或 'rod'
     
     返回:
-    - 包含操作结果或查询结果的JSON响应
+    - 包含操作结果的JSON响应
     """
     try:
         # 将字符串形式的user_id转换为UUID对象
@@ -32,35 +33,32 @@ def handle_free_mint(user_id, mint_type):
     if not free_mint_record:
         free_mint_record = FreeMintRecord(user_id=user_id, avatar_minted=False, rod_minted=False)
         db.session.add(free_mint_record)
-        db.session.commit()
 
-    if mint_type:
-        # 处理铸造请求
-        if mint_type not in ['avatar', 'rod']:
-            return jsonify({'status': 1, 'message': '无效的铸造类型'}), 400
-        
-        if mint_type == 'avatar' and free_mint_record.avatar_minted:
-            return jsonify({'status': 1, 'message': '钓手NFT已经铸造过了'}), 400
-        
-        if mint_type == 'rod' and free_mint_record.rod_minted:
-            return jsonify({'status': 1, 'message': '鱼竿NFT已经铸造过了'}), 400
-        
-        if mint_type == 'avatar':
-            free_mint_record.avatar_minted = True
-            # 这里应该添加钓手NFT铸造的逻辑，并将其添加到用户的owned_avatar_nfts中
-            # 例如：
-            # new_avatar_nft = {"tokenId": f"NFT#{generate_token_id()}", "avatarId": 1}
-            # user.owned_avatar_nfts.append(new_avatar_nft)
-        elif mint_type == 'rod':
-            free_mint_record.rod_minted = True
-            # 这里应该添加鱼竿NFT铸造的逻辑，并将其添加到用户的owned_rod_nfts中
-            # 例如：
-            # new_rod_nft = {"tokenId": f"NFT#{generate_token_id()}", "rodId": 1}
-            # user.owned_rod_nfts.append(new_rod_nft)
-        
-        db.session.commit()
-        
-    # 返回铸造状态
+    # 处理铸造请求
+    if mint_type not in ['avatar', 'rod']:
+        return jsonify({'status': 1, 'message': '无效的铸造类型'}), 400
+    
+    if mint_type == 'avatar' and free_mint_record.avatar_minted:
+        return jsonify({'status': 1, 'message': '钓手NFT已经铸造过了'}), 400
+    
+    if mint_type == 'rod' and free_mint_record.rod_minted:
+        return jsonify({'status': 1, 'message': '鱼竿NFT已经铸造过了'}), 400
+    
+    if mint_type == 'avatar':
+        free_mint_record.avatar_minted = True
+        # 这里应该添加钓手NFT铸造的逻辑，并将其添加到用户的owned_avatar_nfts中
+        # 例如：
+        # new_avatar_nft = {"tokenId": f"NFT#{generate_token_id()}", "avatarId": 1}
+        # user.owned_avatar_nfts.append(new_avatar_nft)
+    elif mint_type == 'rod':
+        free_mint_record.rod_minted = True
+        # 这里应该添加鱼竿NFT铸造的逻辑，并将其添加到用户的owned_rod_nfts中
+        # 例如：
+        # new_rod_nft = {"tokenId": f"NFT#{generate_token_id()}", "rodId": 1}
+        # user.owned_rod_nfts.append(new_rod_nft)
+    
+    db.session.commit()
+    
     return jsonify({
         'status': 0,
         'message': 'success',

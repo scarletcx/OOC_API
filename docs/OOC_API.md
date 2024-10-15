@@ -9,7 +9,7 @@
 
 使用说明：
 - 初始化---3.1 钓鱼准备界面状态接口
-- 免费mint---2.1 免费mint记录&查询接口(无type参数，用作记录)（罗总说不存在没获得免费mint就进游戏的情况，所以该接口可能不需要，后面的查询调用在哪用我也就先不写了）
+- 免费mint---2.1 免费mint记录接口
 - 首页---3.2 游戏进入条件检查接口（检查是否有双NFT）
       ---3.3 钓鱼次数回复倒计时及钓鱼操作接口（action_type使用0进行钓鱼次数和倒计时查询，前端在首页每次倒计时归0时都要调用一次该接口更新次数和倒计时）
 - 点击鱼饵袋子时---3.4 鱼饵购买界面状态接口
@@ -25,13 +25,13 @@
 
 #### 2.1.1 功能说明
 
-该接口用于记录和查询玩家是否已经进行过免费mint操作，即记录和查询玩家的avatar和rod的mint状态。
+该接口用于记录玩家的免费mint操作，即记录玩家的avatar和rod的mint状态。
 
 #### 2.1.2 详细设计
 
 - 接口概要
 
-  | 接口名称 | 免费mint记录&查询接口              |
+  | 接口名称 | 免费mint记录接口                   |
   | -------- | ----------------------------------- |
   | 方法     | POST                                |
   | URL      | http://[IP]:[Port]/app/v1/mint/free |
@@ -41,7 +41,7 @@
   | 参数名称 | 参数英文名 | 参数描述                           | 参数类型 | 是否必须 | 参数示例                             |
   | -------- | ---------- | ---------------------------------- | -------- | -------- | ------------------------------------ |
   | 玩家ID   | user_id    | 标识游戏玩家的唯一ID，为32位uuid号 | string   | 是       | 123e4567-e89b-12d3-a456-426614174000 |
-  | 调用参数 | type       | 查询的NFT类型，avatar或rod         | string   | 否       | "avatar"                             |
+  | 铸造类型 | type       | 铸造的NFT类型，avatar或rod         | string   | 是       | "avatar"                             |
 
 - 响应参数
 
@@ -52,7 +52,7 @@
 
 #### 2.1.3 消息示例
 
-- 请求消息（指定type）
+- 请求消息
 
   ```json
   {
@@ -61,26 +61,9 @@
   }
   ```
 
-- 请求消息（查询）
-
-  ```json
-  {
-      "user_id": "123e4567-e89b-12d3-a456-426614174000"
-  }
-  ```
-
 - 响应消息
 
-  - 成功响应（指定type）
-
-    ```json
-    {
-        "status": 0,
-        "message": "success"
-    }
-    ```
-
-  - 成功响应（查询）
+  - 成功响应
 
     ```json
     {
@@ -98,21 +81,17 @@
     ```json
     {
         "status": 1,
-        "message": "Failed to retrieve mint information."
+        "message": "钓手NFT已经铸造过了"
     }
     ```
 
 #### 2.1.4 功能逻辑
 
-1. 接收玩家ID作为必须参数，type作为可选参数；
-2. 如果提供了type参数：
-   a. 在数据库中更新指定类型（avatar或rod）的免费mint记录,即把免费Mint记录表 (free_mint_records) 中指定user_id的avatar_minted或rod_minted记录更新为TRUE；
-   b. 返回操作成功或失败的状态；
-3. 如果没有提供type参数：
-   a. 查询玩家的avatar和rod的免费mint记录,即查询免费Mint记录表 (free_mint_records) 中指定user_id的avatar_minted和rod_minted记录；
-   b. 返回两种类型的mint状态；
-4. 如果查询成功，返回相应的mint状态；
-5. 如果查询失败，返回错误信息。
+1. 接收玩家ID和铸造类型作为必须参数；
+2. 验证铸造类型是否为 "avatar" 或 "rod"；
+3. 检查玩家是否已经铸造过该类型的NFT；
+4. 如果未铸造过，则更新玩家的免费mint记录；
+5. 返回更新后的mint状态。
 
 ## 3 钓鱼准备界面
 
@@ -135,6 +114,7 @@
 - 鱼竿QTE Skill
 - 准入渔场列表
 - 当前渔场
+- 免费mint记录（avatar和rod）
 
 #### 3.1.2 详细设计
 
@@ -171,6 +151,9 @@
   | 返回数据 | data       | 鱼竿QTE Skill     | qte_skill_desc_en | 鱼竿QTE Skill<br/>英文描述                                   | string   | Plain Fishing Rod                            |
   | 返回数据 | data       | 准入渔场列表      | accessible_fishing_grounds | 玩家可进入的渔场ID列表                                      | array    | [1001, 1002, 1003]                           |
   | 返回数据 | data       | 当前渔场          | current_fishing_ground | 玩家当前所在的渔场ID                                        | integer  | 1001                                         |
+  | 返回数据 | data       | avatar免费mint记录 | avatar_minted    | 是否已进行过avatar免费mint，1是0否                           | integer  | 1                                            |
+  | 返回数据 | data       | rod免费mint记录    | rod_minted       | 是否已进行过rod免费mint，1是0否                              | integer  | 0                                            |
+
 #### 3.1.3 消息示例
 
 - 请求消息
@@ -209,7 +192,9 @@
             "battle_skill_desc_en": "An ordinary fisherman, diligently practicing.",
             "qte_skill_desc_en": "Plain Fishing Rod",
             "accessible_fishing_grounds": [1001, 1002, 1003],
-            "current_fishing_ground": 1001
+            "current_fishing_ground": 1001,
+            "avatar_minted": 1,
+            "rod_minted": 0
         }
     }
     ```
@@ -219,13 +204,13 @@
     ```json
     {
         "status": 1,
-        "message": "Can't get user's information."
+        "message": "未找到用户"
     }
     ```
 
 #### 3.1.4 功能逻辑
 
-1. 根据传入的user_id，从users表中获取玩家的基本信息，包括：
+1. 根据传入的user_id，直接从users表中获取玩家的基本信息，包括：
    - user_id（users表）
    - user_level（users表）
    - user_exp（users表）
@@ -253,7 +238,11 @@
    b. 否则，保持current_fishing_ground不变。
    c. 将current_fishing_ground作为返回数据的一部分。    
 
-6. 如果获取信息成功，将所有数据组合成响应消息返回；如果获取过程中出现任何错误，返回相应的错误信息。
+6. 从free_mint_records表中获取玩家的免费mint记录。
+   - avatar_minted（free_mint_records表）
+   - rod_minted（free_mint_records表）
+
+7. 如果获取信息成功，将所有数据组合成响应消息返回；如果获取过程中出现任何错误，返回相应的错误信息。
 
 响应参数来源说明：
 
@@ -273,7 +262,9 @@
 | qte_skill_desc_en | fishing_rod_configs | 根据current_rod_nft中的rodId从fishing_rod_configs表获取 |
 | accessible_fishing_grounds | fishing_ground_configs | 根据user_level从fishing_ground_configs表中查询得到 |
 | current_fishing_ground | users | 直接从users表获取，但需要确保它在accessible_fishing_grounds中 |
-
+| avatar_minted | free_mint_records | 直接从free_mint_records表获取 |
+| rod_minted | free_mint_records | 直接从free_mint_records表获取 |
+  
 注意：accessible_fishing_grounds是根据玩家当前等级动态计算的，而不是直接从users表获取。这个计算过程应该在每次调用此接口时执行，以确保返回最新的可进入渔场列表。current_fishing_ground仍然直接从users表获取，但应确保它始终是accessible_fishing_grounds中的一个有效值。
 ### 3.2 游戏进入条件检查接口
 
@@ -1490,7 +1481,7 @@
 
 #### 5.3.2 详细设计
 
-- 接口概要
+- 接��概要
 
   | 接口名称 | 鱼池升级接口                           |
   | -------- | -------------------------------------- |

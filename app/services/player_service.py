@@ -1,7 +1,7 @@
 # 此文件包含钓鱼游戏中与玩家相关操作的服务函数。
 # 它实现了玩家行为和数据检索的业务逻辑。
 
-from app.models import User, LevelExperience, FishingGroundConfig, FishingRodConfig, FishingSession, SystemConfig
+from app.models import User, LevelExperience, FishingGroundConfig, FishingRodConfig, FishingSession, SystemConfig, FreeMintRecord
 from app import db
 from flask import jsonify
 from sqlalchemy import func
@@ -10,11 +10,10 @@ import time
 
 #3.1 钓鱼准备界面状态（初始化）接口函数
 def get_fishing_preparation(user_id):
-    
     """
     获取钓鱼准备界面的状态信息
 
-    此函数处理获取玩家进入钓鱼准备界面时所需的所有相关信息。
+    此函数处理获取玩家进入钓鱼准备界面时所需的所有相关信息，包括免费mint记录。
 
     参数:
     - user_id: 玩家ID (UUID格式的字符串)
@@ -50,6 +49,12 @@ def get_fishing_preparation(user_id):
     if user.current_fishing_ground is None or user.current_fishing_ground not in user.accessible_fishing_grounds:
         user.current_fishing_ground = user.accessible_fishing_grounds[-1] if user.accessible_fishing_grounds else None
 
+    # 获取免费mint记录
+    free_mint_record = FreeMintRecord.query.get(user_id)
+    if not free_mint_record:
+        free_mint_record = FreeMintRecord(user_id=user_id, avatar_minted=False, rod_minted=False)
+        db.session.add(free_mint_record)
+
     db.session.commit()
 
     return jsonify({
@@ -69,7 +74,9 @@ def get_fishing_preparation(user_id):
             'battle_skill_desc_en': current_rod.battle_skill_desc_en if current_rod else None,
             'qte_skill_desc_en': current_rod.qte_skill_desc_en if current_rod else None,
             'accessible_fishing_grounds': user.accessible_fishing_grounds,
-            'current_fishing_ground': user.current_fishing_ground
+            'current_fishing_ground': user.current_fishing_ground,
+            'avatar_minted': int(free_mint_record.avatar_minted),
+            'rod_minted': int(free_mint_record.rod_minted)
         }
     })
 

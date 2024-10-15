@@ -2,28 +2,28 @@ from app.routes import bp
 from flask import jsonify, request
 from app.services import nft_service
 
+#2.1 免费mint&记录接口
 @bp.route('/app/v1/mint/free', methods=['POST'])
 def free_mint():
     """
     免费铸造NFT接口
     
     此接口用于处理用户的免费NFT铸造请求。
-    它可以用来铸造钓手(avatar)或鱼竿(rod)NFT，也可以查询用户的铸造状态。
+    它可以用来铸造钓手(avatar)或鱼竿(rod)NFT。
     
     请求参数:
     - user_id: 用户ID (UUID格式)
-    - type: 铸造类型，可选值为 'avatar' 或 'rod'。如果不提供，则查询铸造状态。
+    - type: 铸造类型，可选值为 'avatar' 或 'rod'
     
     返回:
-    - 如果提供了type参数，返回铸造操作的结果
-    - 如果没有提供type参数，返回用户的铸造状态
+    - 铸造操作的结果
     """
     data = request.json
     user_id = data.get('user_id')
     mint_type = data.get('type')
     
-    if not user_id:
-        return jsonify({'status': 1, 'message': '缺少user_id参数'}), 400
+    if not user_id or not mint_type:
+        return jsonify({'status': 1, 'message': '缺少必要参数'}), 400
     
     return nft_service.handle_free_mint(user_id, mint_type)
 
