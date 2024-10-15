@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>系统管理</h1>
+        <div>
+            <h2>数据表列表</h2>
+            <ul>
+                <li v-for="table in tables" :key="table" @click="loadTableData(table)">
+                    [[ table ]]
+                </li>
+            </ul>
+        </div>
+        <div v-if="currentTable">
+            <h2>[[ currentTable ]] 数据</h2>
+            <button @click="showInsertForm = true">新增数据</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th v-for="(column, index) in columns" :key="index">[[ column ]] ([[ columnTypes[index] ]])</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
+                        <td v-for="(column, colIndex) in columns" :key="colIndex">
+                            <textarea v-if="row.editing" v-model="row[column]" :placeholder="row[column] === null ? 'null' : ''"></textarea>
+                            <pre v-else>[[ formatValue(row[column], columnTypes[colIndex]) ]]</pre>
+                        </td>
+                        <td>
+                            <button v-if="!row.editing" @click="startEditing(row)">编辑</button>
+                            <button v-if="row.editing" @click="saveEditing(row)">保存</button>
+                            <button v-if="row.editing" @click="cancelEditing(row)">取消</button>
+                            <button @click="deleteRow(row)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div v-if="showInsertForm">
+            <h3>新增数据</h3>
+            <form @submit.prevent="insertData">
+                <div v-for="(column, index) in columns" :key="index">
+                    <label>[[ column ]] ([[ columnTypes[index] ]]):</label>
+                    <input v-model="newRow[column]">
+                </div>
+                <button type="submit">提交</button>
+                <button @click="showInsertForm = false">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var tables = JSON.parse('{{ tables|tojson|safe }}');
+        
+        new Vue({
+            el: '#app',
+            delimiters: ['[[', ']]'],
+            data: function() {
+                return {
+                    tables: tables || [], // 确保 tables 不为 null
+                    currentTable: '',
+                    columns: [],
+                    columnTypes: [],
+                    tableData: [],
+                    showInsertForm: false,
+                    newRow: {}
+                };
+            },
+            methods: {
+                formatValue(value, columnType) {
+                    if (value === null) return 'null';
+                    if (columnType.startsWith('ARRAY') || columnType.startsWith('JSON')) {
+                        try {
+                            return JSON.stringify(JSON.parse(value), null, 2);
+                        } catch (e) {
+                            return value;
+                        }
+                    }
+                    return value;
+                },
+                parseValue(value, columnType) {
+                    if (value === null || value === '') return null;
+                    if (columnType.startsWith('ARRAY') || columnType.startsWith('JSON')) {
+                        try {
+                            return JSON.stringify(JSON.parse(value));
+                        } catch (e) {
+                            return value;
+                        }
+                    }
+                    if (columnType.startsWith('BOOLEAN')) {
+                        return value === true || value === 'true' || value === '1';
+                    }
+                    return value;
+                },
+                loadTableData(table) {
+                    this.currentTable = table;
+                    axios.get(`/api/table_data/${table}`)
+                        .then(response => {
+                            if (response && response.data) {
+                                this.columns = response.data.columns || [];
+                                this.columnTypes = response.data.column_types || [];
+                                this.tableData = (response.data.data || []).map(row => ({...row, editing: false, original: {...row}}));
+                            } else {
+                                console.error('Invalid response format');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading table data:', error);
+                        });
+                },
+                startEditing(row) {
+                    row.editing = true;
+                    row.original = JSON.parse(JSON.stringify(row));
+                },
+                saveEditing(row) {
+                    let updatedRow = {};
+                    for (let key in row) {
+                        if (key !== 'editing' && key !== 'original') {
+                            const columnType = this.columnTypes[this.columns.indexOf(key)];
+                            updatedRow[key] = this.parseValue(row[key], columnType);
+                        }
+                    }
+                    console.log('Sending data:', updatedRow);
+                    axios.post(`/api/update_data/${this.currentTable}`, updatedRow)
+                        .then(response => {
+                            console.log('Response:', response);
+                            if (response.data.success) {
+                                row.editing = false;
+                                Object.assign(row, response.data.updatedData);
+                                alert(response.data.message);
+                            } else {
+                                alert(response.data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            if (error.response) {
+                                console.error('Error response:', error.response.data);
+                                alert(`更新失败: ${error.response.data.message}`);
+                            } else {
+                                console.error('Error:', error.message);
+                                alert('更新失败，请查看控制台以获取更多信息');
+                            }
+                        });
+                },
+                cancelEditing(row) {
+                    Object.assign(row, row.original);
+                    row.editing = false;
+                },
+                deleteRow(row) {
+                    if (confirm('确定要删除这条数据吗？')) {
+                        axios.post(`/api/delete_data/${this.currentTable}`, row)
+                            .then(response => {
+                                if (response.data.success) {
+                                    this.tableData = this.tableData.filter(item => item !== row);
+                                    alert(response.data.message);
+                                } else {
+                                    alert(response.data.message);
+                                }
+                            });
+                    }
+                },
+                insertData() {
+                    axios.post(`/api/insert_data/${this.currentTable}`, this.newRow)
+                        .then(response => {
+                            if (response.data.success) {
+                                this.loadTableData(this.currentTable);
+                                this.showInsertForm = false;
+                                this.newRow = {};
+                                alert(response.data.message);
+                            } else {
+                                alert(response.data.message);
+                            }
+                        });
+                }
+            }
+        });
+
+        // 添加全局错误处理
+        window.addEventListener('error', function(event) {
+            console.error('Global error:', event.error);
+        });
+    </script>
+</body>
+</html>

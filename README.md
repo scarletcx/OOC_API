@@ -43,6 +43,7 @@
 python run.py
 ```
 
+
 服务器将在 `http://localhost:5000` 上运行。
 
 ## 项目结构
@@ -51,9 +52,35 @@ python run.py
   - `models.py`: 数据库模型
   - `routes/`: 路由处理
   - `services/`: 业务逻辑
+  - `templates/`: HTML 模板
 - `config.py`: 配置文件
 - `init_db.py`: 数据库初始化脚本
 - `run.py`: 应用入口点
+
+## 前端页面
+
+项目现在包含一个系统管理前端页面，可以通过以下URL访问：
+
+- 系统管理页面: `http://localhost:5000/system`
+
+这个页面提供了以下功能：
+- 显示所有数据库表的列表
+- 查看选定表的数据
+- 删除记录（其他功能如添加和编辑记录尚未实现）
+
+## API 文档
+
+API 文档可以在 `docs/OOC_API_9.30.md` 中找到。
+
+## 数据库设计
+
+数据库设计文档可以在 `docs/dataBase.md` 中找到。
+
+## 开发
+
+### 更新依赖
+
+如果添加了新的依赖，请更新 `requirements.txt` 文件：
 
 ## API 文档
 

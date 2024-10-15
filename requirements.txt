@@ -5,3 +5,5 @@ python-dotenv==1.0.0
 SQLAlchemy==2.0.15
 Werkzeug==2.3.4
 numpy==1.25.2
+requests==2.26.0
+click==8.1.3
