@@ -28,6 +28,11 @@
    pip install -r requirements.txt
    ```
 
+   如果依赖文件有更新，请执行以下命令更新依赖：
+   ```
+   pip install --upgrade -r requirements.txt
+   ```
+
 4. 设置环境变量：
    根据环境更新`.env`中的值。
 

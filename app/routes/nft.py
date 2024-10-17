@@ -14,18 +14,20 @@ def free_mint():
     请求参数:
     - user_id: 用户ID (UUID格式)
     - type: 铸造类型，可选值为 'avatar' 或 'rod'
+    - wallet_address: 玩家的以太坊钱包地址
     
     返回:
-    - 铸造操作的结果
+    - 铸造操作的结果，包括mint状态和交易哈希
     """
     data = request.json
     user_id = data.get('user_id')
     mint_type = data.get('type')
+    wallet_address = data.get('wallet_address')
     
-    if not user_id or not mint_type:
+    if not user_id or not mint_type or not wallet_address:
         return jsonify({'status': 1, 'message': '缺少必要参数'}), 400
     
-    return nft_service.handle_free_mint(user_id, mint_type)
+    return nft_service.handle_free_mint(user_id, mint_type, wallet_address)
 
 #3.10 更换钓手NFT和鱼竿NFT接口
 @bp.route('/app/v1/nft/change', methods=['POST'])
