@@ -25,6 +25,7 @@ def change_fishing_ground():
     data = request.json
     return player_service.change_fishing_ground(data)
 
+#3.4 钓鱼次数回复倒计时及钓鱼操作接口
 @bp.route('/app/v1/player/status', methods=['POST'])
 def player_status():
     """

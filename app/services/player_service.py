@@ -13,7 +13,7 @@ def get_fishing_preparation(user_id):
     """
     获取钓鱼准备界面的状态信息
 
-    此函数处理获取玩家进入钓鱼准备界面时所需的所有相关信息，包括免费mint记录。
+    此函数处理获取玩家进入钓鱼准备界面时所需的所有相关信息，包括免费mint记录和钓鱼次数信息。
 
     参数:
     - user_id: 玩家ID (UUID格式的字符串)
@@ -55,7 +55,26 @@ def get_fishing_preparation(user_id):
         free_mint_record = FreeMintRecord(user_id=user_id, avatar_minted=False, rod_minted=False)
         db.session.add(free_mint_record)
 
+    # 添加钓鱼次数和恢复时间的处理逻辑
+    max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
+    fishing_recovery_interval = int(SystemConfig.query.filter_by(config_key='fishing_recovery_interval').first().config_value)
+
+    current_time = int(time.time())  # 使用当前的Unix时间戳
+
+    if user.next_recovery_time and current_time >= user.next_recovery_time:
+        time_diff = current_time - user.next_recovery_time
+        recovered_count = int(time_diff // fishing_recovery_interval) + 1
+        user.fishing_count = min(user.fishing_count + recovered_count, max_fishing_count)
+        
+        if user.fishing_count < max_fishing_count:
+            user.next_recovery_time += fishing_recovery_interval * recovered_count
+        else:
+            user.next_recovery_time = None
+
     db.session.commit()
+
+    # 获取 max_fishing_count
+    max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
 
     return jsonify({
         'status': 0,
@@ -76,7 +95,10 @@ def get_fishing_preparation(user_id):
             'accessible_fishing_grounds': user.accessible_fishing_grounds,
             'current_fishing_ground': user.current_fishing_ground,
             'avatar_minted': int(free_mint_record.avatar_minted),
-            'rod_minted': int(free_mint_record.rod_minted)
+            'rod_minted': int(free_mint_record.rod_minted),
+            'fishing_count': user.fishing_count,
+            'next_recovery_time': user.next_recovery_time,
+            'max_fishing_count': max_fishing_count  # 添加这一行
         }
     })
 
@@ -194,6 +216,7 @@ def update_player_exp(data):
         db.session.rollback()
         return jsonify({'status': 1, 'message': f'更新玩家经验失败: {str(e)}'}), 500
 
+#3.4 钓鱼次数回复倒计时及钓鱼操作接口函数
 def handle_player_status(data):
     user_id = data.get('user_id')
     action_type = data.get('action_type')
@@ -336,3 +359,4 @@ def init_fishing_session(user_id):
         # 如果发生错误，回滚事务
         db.session.rollback()
         return jsonify({'status': 1, 'message': f'创建钓鱼会话失败: {str(e)}'}), 500
+

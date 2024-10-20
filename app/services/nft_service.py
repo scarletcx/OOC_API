@@ -60,18 +60,22 @@ def handle_free_mint(user_id, mint_type, wallet_address):
     
     # 执行铸造操作
     try:
-        if mint_type == 'avatar':# 铸造钓手NFT，并获得交易哈希和监听得到的参数
-            tx_hash, token_id = mint_avatar(wallet_address)
+        if mint_type == 'avatar':
+            # 铸造钓手NFT，并获得交易哈希和监听得到的参数
+            tx_hash, tokenId = mint_avatar(wallet_address)
             free_mint_record.avatar_minted = True
-            event_data = {'token_id': token_id}
-        else:# 铸造鱼竿NFT，并获得交易哈希和监听得到的参数
-            tx_hash, token_id, rod_type = mint_rod(wallet_address)
+            event_data = {'tokenId': tokenId}
+            avatarPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+        else:
+            # 铸造鱼竿NFT，并获得交易哈希和监听得到的参数
+            tx_hash, tokenId, rodId = mint_rod(wallet_address)
             free_mint_record.rod_minted = True
-            event_data = {'token_id': token_id, 'rod_type': rod_type}
+            event_data = {'tokenId': tokenId, 'rodId': rodId}
+            rodPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
     
         db.session.commit()
     
-        return jsonify({
+        response_data = {
             'status': 0,
             'message': 'success',
             'data': {
@@ -80,7 +84,15 @@ def handle_free_mint(user_id, mint_type, wallet_address):
                 'tx_hash': tx_hash,
                 'event_data': event_data
             }
-        })
+        }
+
+        # 根据mint_type添加相应的URL
+        if mint_type == 'avatar':
+            response_data['data']['avatarPicUrl'] = avatarPicUrl
+        else:
+            response_data['data']['rodPicUrl'] = rodPicUrl
+
+        return jsonify(response_data)
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 1, 'message': f'铸造失败: {str(e)}'}), 500
@@ -144,11 +156,11 @@ def mint_avatar(wallet_address):
     # 获取FishermanMinted事件
     fisherman_minted_event = avatar_contract.events.FishermanMinted().process_receipt(tx_receipt)
     if fisherman_minted_event:
-        token_id = fisherman_minted_event[0]['args']['tokenId']
+        tokenId = fisherman_minted_event[0]['args']['tokenId']
     else:
-        token_id = None
+        tokenId = None
 
-    return w3.to_hex(tx_hash), token_id
+    return w3.to_hex(tx_hash), tokenId
 
 def mint_rod(wallet_address):
     """
@@ -197,10 +209,63 @@ def mint_rod(wallet_address):
     # 获取RodMinted事件
     rod_minted_event = rod_contract.events.RodMinted().process_receipt(tx_receipt)
     if rod_minted_event:
-        token_id = rod_minted_event[0]['args']['tokenId']
-        rod_type = rod_minted_event[0]['args']['rodType']
+        tokenId = rod_minted_event[0]['args']['tokenId']
+        rodId = rod_minted_event[0]['args']['rodType']
     else:
-        token_id = None
-        rod_type = None
+        tokenId = None
+        rodId = None
 
-    return w3.to_hex(tx_hash), token_id, rod_type
+    return w3.to_hex(tx_hash), tokenId, rodId
+
+#3.10 更换钓手NFT和鱼竿NFT接口函数
+def change_nft(data):
+    """
+    更换用户当前使用的NFT
+    
+    此函数处理用户更换当前使用的钓手(avatar)或鱼竿(rod)NFT的请求。
+    
+    参数:
+    - data: 包含user_id, type和nft_token的字典
+    
+    返回:
+    - 包含操作结果的JSON响应
+    """
+    user_id = data.get('user_id')
+    nft_type = data.get('type')
+    nft_token = data.get('nft_token')
+
+    # 查询用户
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+
+    # 验证NFT类型
+    if nft_type not in ['avatar', 'rod']:
+        return jsonify({'status': 1, 'message': '无效的NFT类型', 'data': {'error_code': 2002, 'error_message': "类型必须是 'avatar' 或 'rod'"}}), 400
+
+    # 根据NFT类型选择相应的NFT列表
+    nft_list = user.owned_avatar_nfts if nft_type == 'avatar' else user.owned_rod_nfts
+    nft = next((item for item in nft_list if item['tokenId'] == nft_token), None)
+
+    # 检查用户是否拥有该NFT
+    if not nft:
+        return jsonify({'status': 1, 'message': '未找到NFT', 'data': {'error_code': 2001, 'error_message': '指定的NFT不属于该用户'}}), 404
+
+    # 更新用户当前使用的NFT
+    if nft_type == 'avatar':
+        user.current_avatar_nft = nft
+    else:
+        user.current_rod_nft = nft
+
+    # 提交更改到数据库
+    db.session.commit()
+
+    # 返回成功响应
+    return jsonify({
+        'status': 0,
+        'message': 'success',
+        'data': {
+            'type': nft_type,
+            'new_nft_token': nft_token
+        }
+    })
