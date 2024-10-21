@@ -181,3 +181,28 @@ docker-compose exec web python init_db.py
 ## 许可证
 
 这个项目使用 [MIT 许可证](LICENSE)。
+
+## Docker 部署更新代码
+
+当您需要更新已部署的 Docker 环境中的代码时，请按照以下步骤操作：
+
+### 1. 拉取最新代码
+
+首先，确保您的本地代码库是最新的：
+
+```
+git pull origin main
+```
+
+### 2. 重新构建和启动 Docker 容器
+
+```
+cd ~/ooc_api
+docker-compose up -d
+```
+
+### 3. 重新初始化数据库
+
+```
+docker-compose exec web python init_db.py
+```

@@ -25,18 +25,14 @@ def change_fishing_ground():
     data = request.json
     return player_service.change_fishing_ground(data)
 
-#3.4 钓鱼次数回复倒计时及钓鱼操作接口
+#3.4 钓鱼次数加一接口
 @bp.route('/app/v1/player/status', methods=['POST'])
 def player_status():
     """
-    钓鱼次数回复倒计时及钓鱼操作接口
-
-    此接口用于获取玩家当前的钓鱼次数和下一次恢复时间，以及执行钓鱼操作。
+    钓鱼次数加一接口
 
     请求参数:
     - user_id: 玩家ID (UUID格式)
-    - action_type: 操作类型 (0: 查询, 1: 钓鱼（次数减一）, 2: 次数加一)
-    - session_id: 钓鱼会话的唯一ID（仅当action_type为1时需要）
 
     返回:
     - 包含玩家钓鱼次数和下一次恢复时间的JSON响应

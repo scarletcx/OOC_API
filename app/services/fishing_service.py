@@ -7,47 +7,23 @@ import uuid
 from decimal import Decimal
 import numpy as np
 
-#3.8 QTE初始化/QTE剩余次数和分数接口函数
+#3.8 QTE剩余次数和分数接口函数
 def handle_qte(data):
     user_id = data.get('user_id')
-    action_type = data.get('action_type')
     qte_colour = data.get('qte_colour')
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
-
-    if action_type == 0:  # Initialize
-        return initialize_qte(user)
-    elif action_type == 1:  # QTE operation
-        return process_qte(user, qte_colour)
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
     else:
-        return jsonify({'status': 1, 'message': 'Invalid action type'}), 400
-
-def initialize_qte(user):
-    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId'])
-    user.remaining_qte_count = current_rod.qte_count
-    user.accumulated_qte_score = 0
-    user.qte_hit_status_green = False
-    user.qte_hit_status_red = False
-    user.qte_hit_status_black = False
-    db.session.commit()
-
-    return jsonify({
-        'status': 0,
-        'message': 'success',
-        'data': {
-            'remaining_qte_count': user.remaining_qte_count,
-            'accumulated_qte_score': user.accumulated_qte_score
-        }
-    })
+        return process_qte(user, qte_colour)        
 
 def process_qte(user, qte_colour):
     if user.remaining_qte_count <= 0:
-        return jsonify({'status': 1, 'message': 'No remaining QTE attempts'}), 400
+        return jsonify({'status': 0, 'message': 'No remaining QTE attempts'}), 400
     
     if qte_colour not in ['red', 'green', 'black']:
-        return jsonify({'status': 1, 'message': 'Invalid QTE colour'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid QTE colour'}), 400
 
     current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId'])
     
@@ -69,7 +45,7 @@ def process_qte(user, qte_colour):
     db.session.commit()
 
     return jsonify({
-        'status': 0,
+        'status': 1,
         'message': 'success',
         'data': {
             'remaining_qte_count': user.remaining_qte_count,

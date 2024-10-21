@@ -77,7 +77,7 @@ def get_fishing_preparation(user_id):
     max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
 
     return jsonify({
-        'status': 0,
+        'status': 1,
         'message': 'success',
         'data': {
             'user_id': str(user.user_id),
@@ -92,7 +92,7 @@ def get_fishing_preparation(user_id):
             'owned_rod_nfts': user.owned_rod_nfts,
             'battle_skill_desc_en': current_rod.battle_skill_desc_en if current_rod else None,
             'qte_skill_desc_en': current_rod.qte_skill_desc_en if current_rod else None,
-            'accessible_fishing_grounds': user.accessible_fishing_grounds,
+            #'accessible_fishing_grounds': user.accessible_fishing_grounds,
             'current_fishing_ground': user.current_fishing_ground,
             'avatar_minted': int(free_mint_record.avatar_minted),
             'rod_minted': int(free_mint_record.rod_minted),
@@ -216,76 +216,35 @@ def update_player_exp(data):
         db.session.rollback()
         return jsonify({'status': 1, 'message': f'更新玩家经验失败: {str(e)}'}), 500
 
-#3.4 钓鱼次数回复倒计时及钓鱼操作接口函数
+#3.4 钓鱼次数加一接口函数
 def handle_player_status(data):
     user_id = data.get('user_id')
-    action_type = data.get('action_type')
-    session_id = data.get('session_id')
-
     try:
         user_id = uuid.UUID(user_id)
     except ValueError:
-        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
+        return jsonify({'status': 1, 'message': 'Invalid user_id format'}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 1, 'message': 'User not found'}), 404
 
     max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
     fishing_recovery_interval = int(SystemConfig.query.filter_by(config_key='fishing_recovery_interval').first().config_value)
-
     current_time = int(time.time())  # 使用当前的Unix时间戳
-
-    if action_type == 0:  # 查询
-        if user.next_recovery_time and current_time >= user.next_recovery_time:
-            time_diff = current_time - user.next_recovery_time
-            recovered_count = int(time_diff // fishing_recovery_interval) + 1
-            user.fishing_count = min(user.fishing_count + recovered_count, max_fishing_count)
-            
-            if user.fishing_count < max_fishing_count:
-                user.next_recovery_time +=  fishing_recovery_interval
-            else:
-                user.next_recovery_time = None
-
-            db.session.commit()
-
-    elif action_type == 1:  # 钓鱼（次数减一）
-        if not session_id:
-            return jsonify({'status': 1, 'message': '缺少session_id参数'}), 400
-
-        session = FishingSession.query.get(session_id)
-        if not session or not session.session_status:
-            return jsonify({'status': 1, 'message': '无效的钓鱼会话'}), 400
-
-        if session.fishing_count_deducted:
-            return jsonify({'status': 1, 'message': '钓鱼次数已经扣除'}), 400
-
-        if user.fishing_count <= 0:
-            return jsonify({'status': 1, 'message': '钓鱼次数不足'}), 400
-
-        user.fishing_count -= 1
-        session.fishing_count_deducted = True
-        
-        if user.fishing_count < max_fishing_count and not user.next_recovery_time:
-            user.next_recovery_time = current_time + fishing_recovery_interval
-
-    elif action_type == 2:  # 次数加一
-        if user.next_recovery_time and current_time >= user.next_recovery_time:
-            user.fishing_count = min(user.fishing_count + 1, max_fishing_count)
-            if user.fishing_count < max_fishing_count:
-                user.next_recovery_time +=  fishing_recovery_interval
-            else:
-                user.next_recovery_time = None
+    
+    if user.next_recovery_time and current_time >= user.next_recovery_time:
+        user.fishing_count = min(user.fishing_count + 1, max_fishing_count)
+        if user.fishing_count < max_fishing_count:
+            user.next_recovery_time +=  fishing_recovery_interval
         else:
-            return jsonify({'status': 1, 'message': '还未到恢复时间'}), 400
-
+            user.next_recovery_time = None
     else:
-        return jsonify({'status': 1, 'message': '无效的action_type'}), 400
+        return jsonify({'status': 0, 'message': 'Recovery time has not been reached yet'}), 400
 
     db.session.commit()
 
     return jsonify({
-        'status': 0,
+        'status': 1,
         'message': 'success',
         'data': {
             'fishing_count': user.fishing_count,
@@ -310,24 +269,24 @@ def init_fishing_session(user_id):
     try:
         user_id = uuid.UUID(user_id)
     except ValueError:
-        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 1. 检查玩家是否拥有当前使用的钓手NFT和鱼竿NFT
     if not user.current_avatar_nft or not user.current_rod_nft:
-        return jsonify({'status': 1, 'message': '玩家缺少必要的NFT'}), 400
+        return jsonify({'status': 0, 'message': 'Player missing necessary NFTs'}), 400
 
     # 2. 检查玩家当前钓鱼次数
     if user.fishing_count <= 0:
-        return jsonify({'status': 1, 'message': '钓鱼次数不足'}), 400
+        return jsonify({'status': 0, 'message': 'Insufficient fishing count'}), 400
 
     # 3. 检查玩家当前鱼饵数量
     fishing_bait_cost = int(SystemConfig.query.filter_by(config_key='fishing_bait_cost').first().config_value)
     if user.user_baits < fishing_bait_cost:
-        return jsonify({'status': 1, 'message': '鱼饵数量不足'}), 400
+        return jsonify({'status': 0, 'message': 'Insufficient bait count'}), 400
 
     # 4. 开始数据库事务
     try:
@@ -341,17 +300,40 @@ def init_fishing_session(user_id):
 
             # 7. 扣除鱼饵数量
             user.user_baits -= fishing_bait_cost
+            
+            # 8. 扣除钓鱼次数
+            max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
+            fishing_recovery_interval = int(SystemConfig.query.filter_by(config_key='fishing_recovery_interval').first().config_value)
+            current_time = int(time.time())  # 使用当前的Unix时间戳
 
-        # 8. 提交数据库更改
+            user.fishing_count -= 1
+            session.fishing_count_deducted = True
+        
+            if user.fishing_count < max_fishing_count and not user.next_recovery_time:
+                user.next_recovery_time = current_time + fishing_recovery_interval
+                
+            #qte初始化
+            current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId'])
+            user.remaining_qte_count = current_rod.qte_count
+            user.accumulated_qte_score = 0
+            user.qte_hit_status_green = False
+            user.qte_hit_status_red = False
+            user.qte_hit_status_black = False
+
+        # 9. 提交数据库更改
         db.session.commit()
 
-        # 9. 返回成功响应
+        # 10. 返回成功响应
         return jsonify({
-            'status': 0,
+            'status': 1,
             'message': 'success',
             'data': {
+                'fishing_count': user.fishing_count,
+                'next_recovery_time': user.next_recovery_time,
                 'user_baits': user.user_baits,
-                'session_id': str(session.session_id)
+                'session_id': str(session.session_id),
+                'qte_count ': user.remaining_qte_count,
+                'accumulated_qte_score': user.accumulated_qte_score
             }
         })
 
@@ -359,4 +341,5 @@ def init_fishing_session(user_id):
         # 如果发生错误，回滚事务
         db.session.rollback()
         return jsonify({'status': 1, 'message': f'创建钓鱼会话失败: {str(e)}'}), 500
+
 
