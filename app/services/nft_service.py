@@ -217,7 +217,31 @@ def mint_rod(wallet_address):
 
     return w3.to_hex(tx_hash), tokenId, rodId
 
-#3.10 更换钓手NFT和鱼竿NFT接口函数
+#3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
+def change_nft_status(data):
+    user_id = data.get('user_id')
+    # 查询用户
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+    # 从合约更新owned_avatar_nfts和owned_rod_nfts
+    
+    # 检查并更新current_avatar_nft
+    
+    # 检查并更新current_rod_nft
+    # 返回成功响应
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'current_avatar_nft': user.current_avatar_nft,
+            'current_rod_nft': user.current_rod_nft,
+            'owned_avatar_nfts': user.owned_avatar_nfts,
+            'owned_rod_nfts': user.owned_rod_nfts
+        }
+    })
+
+#3.11 更换钓手NFT和鱼竿NFT接口函数
 def change_nft(data):
     """
     更换用户当前使用的NFT
@@ -243,6 +267,7 @@ def change_nft(data):
     if nft_type not in ['avatar', 'rod']:
         return jsonify({'status': 1, 'message': '无效的NFT类型', 'data': {'error_code': 2002, 'error_message': "类型必须是 'avatar' 或 'rod'"}}), 400
 
+    
     # 根据NFT类型选择相应的NFT列表
     nft_list = user.owned_avatar_nfts if nft_type == 'avatar' else user.owned_rod_nfts
     nft = next((item for item in nft_list if item['tokenId'] == nft_token), None)

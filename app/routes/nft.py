@@ -29,7 +29,13 @@ def free_mint():
     
     return nft_service.handle_free_mint(user_id, mint_type, wallet_address)
 
-#3.10 更换钓手NFT和鱼竿NFT接口
+#3.10 更换钓手NFT和鱼竿NFT界面状态接口
+@bp.route('/app/v1/nft/change/status', methods=['POST'])
+def change_nft_status():
+    data = request.json
+    return nft_service.change_nft_status(data)
+
+#3.11 更换钓手NFT和鱼竿NFT接口
 @bp.route('/app/v1/nft/change', methods=['POST'])
 def change_nft():
     """

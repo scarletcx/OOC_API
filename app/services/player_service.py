@@ -35,7 +35,13 @@ def get_fishing_preparation(user_id):
     level_exp = LevelExperience.query.get(user.user_level)
     if not level_exp:
         return jsonify({'status': 1, 'message': '未找到等级经验信息'}), 500
-
+    
+    # 从合约更新owned_avatar_nfts和owned_rod_nfts
+    
+    # 检查并更新current_avatar_nft
+    
+    # 检查并更新current_rod_nft
+    
     # 获取当前鱼竿的信息
     current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']) if user.current_rod_nft else None
 
@@ -126,6 +132,7 @@ def check_game_entry(data):
         }
     })
 
+#3.3 改变渔场接口函数
 def change_fishing_ground(data):
     """
     更改玩家当前的钓鱼场地。
@@ -276,6 +283,13 @@ def init_fishing_session(user_id):
         return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 1. 检查玩家是否拥有当前使用的钓手NFT和鱼竿NFT
+    
+    # 先从合约更新owned_avatar_nfts和owned_rod_nfts
+    
+    # 检查并更新current_avatar_nft
+    
+    # 检查并更新current_rod_nft
+    
     if not user.current_avatar_nft or not user.current_rod_nft:
         return jsonify({'status': 0, 'message': 'Player missing necessary NFTs'}), 400
 
