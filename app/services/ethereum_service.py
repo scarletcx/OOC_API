@@ -29,27 +29,29 @@ block_number = 123456  # Replace with the desired block number or use 'latest'
 block = w3.eth.get_block(block_number)
 print(block)
 '''
-#print('w3:',w3)
-#print('Is connected:', w3.is_connected())
-#print('连接后')
 # 读取 ABI 文件
 with open(os.getenv('AVATAR_CONTRACT_ABI_PATH')) as f:
     AVATAR_CONTRACT_ABI = json.load(f)
 
 with open(os.getenv('ROD_CONTRACT_ABI_PATH')) as f:
     ROD_CONTRACT_ABI = json.load(f)
+    
+with open(os.getenv('GMC_CONTRACT_ABI_PATH')) as f:
+    GMC_CONTRACT_ABI = json.load(f)
+
+with open(os.getenv('USER_CONTRACT_ABI_PATH')) as f:
+    USER_CONTRACT_ABI = json.load(f)
 
 # 获取智能合约地址
 AVATAR_CONTRACT_ADDRESS = os.getenv('AVATAR_CONTRACT_ADDRESS')
 ROD_CONTRACT_ADDRESS = os.getenv('ROD_CONTRACT_ADDRESS')
-
+GMC_CONTRACT_ADDRESS = os.getenv('GMC_CONTRACT_ADDRESS')
+USER_CONTRACT_ADDRESS = os.getenv('USER_CONTRACT_ADDRESS')
 # 合约实例
 avatar_contract = w3.eth.contract(address=AVATAR_CONTRACT_ADDRESS, abi=AVATAR_CONTRACT_ABI)
 rod_contract = w3.eth.contract(address=ROD_CONTRACT_ADDRESS, abi=ROD_CONTRACT_ABI)
-#print('avatar_contract:')
-#print(avatar_contract)
-#print(rod_contract)
-
+gmc_contract = w3.eth.contract(address=GMC_CONTRACT_ADDRESS, abi=GMC_CONTRACT_ABI)
+user_contract = w3.eth.contract(address=USER_CONTRACT_ADDRESS, abi=USER_CONTRACT_ABI)
 def get_w3():
     return w3
 
@@ -58,3 +60,9 @@ def get_avatar_contract():
 
 def get_rod_contract():
     return rod_contract
+
+def get_user_contract():
+    return user_contract
+
+def get_gmc_contract():
+    return gmc_contract

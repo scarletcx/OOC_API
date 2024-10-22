@@ -2,19 +2,6 @@ from app.routes import bp
 from flask import jsonify, request
 from app.services import fishing_service
 
-
-#3.8 QTE初始化/QTE剩余次数和分数接口
-@bp.route('/app/v1/fishing/qte', methods=['POST'])
-def fishing_qte():
-    data = request.json
-    return fishing_service.handle_qte(data)
-
-#4.1 获鱼信息接口
-@bp.route('/app/v1/fish/info', methods=['POST'])
-def get_fish_info():
-    data = request.json
-    return fishing_service.get_fish_info(data)
-
 #3.6 鱼饵购买界面状态接口
 @bp.route('/app/v1/bait/buystate', methods=['POST'])
 def bait_buy_state():
@@ -27,3 +14,15 @@ def bait_buy_state():
 def buy_bait():
     data = request.json
     return fishing_service.buy_bait(data)
+
+#3.8 QTE初始化/QTE剩余次数和分数接口
+@bp.route('/app/v1/fishing/qte', methods=['POST'])
+def fishing_qte():
+    data = request.json
+    return fishing_service.handle_qte(data)
+
+#4.1 获鱼信息接口
+@bp.route('/app/v1/fish/info', methods=['POST'])
+def get_fish_info():
+    data = request.json
+    return fishing_service.get_fish_info(data)

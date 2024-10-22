@@ -151,28 +151,69 @@ sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-### 5.在服务器上创建项目目录
+### 5.安装和配置 PostgreSQL
+
+```
+# 安装 PostgreSQL
+sudo apt install postgresql postgresql-contrib -y
+
+# 启动 PostgreSQL 服务
+sudo systemctl start postgresql
+
+# 设置 PostgreSQL 开机自启
+sudo systemctl enable postgresql
+
+# 切换到 postgres 用户
+sudo -i -u postgres
+
+# 创建新的数据库用户（替换 your_username 为您想要的用户名）
+createuser --interactive --pwprompt your_username
+
+# 创建新的数据库（替换 your_database 为您想要的数据库名）
+createdb your_database
+
+# 退出 postgres 用户
+exit
+
+# 配置 PostgreSQL 允许远程连接（可选，如果您需要从其他机器连接）
+sudo nano /etc/postgresql/12/main/postgresql.conf
+# 将 listen_addresses 行改为：listen_addresses = '*'
+
+sudo nano /etc/postgresql/12/main/pg_hba.conf
+# 添加以下行：host all all 0.0.0.0/0 md5  # 允许所有来源的连接，使用 md5 加密
+#其他机器的连接方法
+# 1. 在服务器上创建一个用户，并授予连接权限
+# 2. 在客户端机器上使用该用户进行连接
+
+# 重启 PostgreSQL 服务
+sudo systemctl restart postgresql
+```
+
+### 6.在服务器上创建项目目录
 ```
 mkdir -p ~/ooc_api
 cd ~/ooc_api
 ```
 
-### 6.将项目文件传输到服务器
+### 7.将项目文件传输到服务器
 
-### 7.在服务器上构建和启动 Docker 容器
+### 8.在服务器上构建和启动 Docker 容器
 ```
 cd ~/ooc_api
 docker-compose up -d
 ```
 
-### 8.初始化数据库
+### 9.初始化数据库
 首次运行时，你需要初始化数据库。进入 web 容器并运行初始化脚本：
 ```
 docker-compose exec web python init_db.py
 ```
 
-### 9.验证部署访问接口
+### 10.验证部署访问接口
 现在你的应用应该在服务器的 5000 端口上运行。你可以通过浏览器访问 http://your_server_ip:5000 来查看你的应用。
+
+
+替换上述值为您实际的数据库配置。
 
 ## 贡献
 

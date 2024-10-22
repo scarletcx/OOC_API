@@ -5,7 +5,7 @@ from app.models import User, LevelExperience, FishingGroundConfig, FishingRodCon
 from app import db
 from flask import jsonify
 from sqlalchemy import func
-import uuid
+from app.services import ethereum_service
 import time
 
 #3.1 钓鱼准备界面状态（初始化）接口函数
@@ -23,27 +23,41 @@ def get_fishing_preparation(user_id):
     """
     
     try:
-        user_id = uuid.UUID(user_id)
+        # 将字符串形式的user_id转换为CHAR(42)
+        user_id = user_id.strip()
     except ValueError:
-        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 获取当前等级的最大经验值
     level_exp = LevelExperience.query.get(user.user_level)
     if not level_exp:
-        return jsonify({'status': 1, 'message': '未找到等级经验信息'}), 500
+        return jsonify({'status': 0, 'message': 'Level experience not found'}), 500
     
-    # 从合约更新owned_avatar_nfts和owned_rod_nfts
+    # 更新用户的owned_avatar_nfts
+    avatar_contract = ethereum_service.get_avatar_contract()
+    owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+            
+    # 如果current_avatar_nft为空，设置为最新铸造的NFT
+    if user.current_avatar_nft is None and owned_nfts:
+        user.current_avatar_nft = owned_nfts[-1]
     
-    # 检查并更新current_avatar_nft
-    
-    # 检查并更新current_rod_nft
+    # 更新用户的owned_rod_nfts
+    rod_contract = ethereum_service.get_rod_contract()
+    owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+            
+    # 如果current_rod_nft为空，设置为最新铸造的NFT
+    if user.current_rod_nft is None and owned_nfts:
+        user.current_rod_nft = owned_nfts[-1]
+    db.session.commit()
     
     # 获取当前鱼竿的信息
-    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']) if user.current_rod_nft else None
+    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1) if user.current_rod_nft else None
 
     # 获取可进入的渔场信息
     accessible_grounds = FishingGroundConfig.query.filter(FishingGroundConfig.enter_lv <= user.user_level).all()
@@ -81,7 +95,34 @@ def get_fishing_preparation(user_id):
 
     # 获取 max_fishing_count
     max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
-
+    
+    current_avatar_nft = user.current_avatar_nft
+    if current_avatar_nft and 'tokenId' in current_avatar_nft:
+        tokenId = current_avatar_nft['tokenId']
+        current_avatar_nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+        
+    current_rod_nft = user.current_rod_nft
+    if current_rod_nft and 'rodId' in current_rod_nft:
+        rodId = current_rod_nft['rodId']
+        current_rod_nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
+        del current_rod_nft['rodId']
+         
+    owned_avatar_nfts = [
+        {
+            'tokenId': nft['tokenId'],
+            'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+        }
+        for nft in user.owned_avatar_nfts
+    ]
+        
+    owned_rod_nfts = [
+        {
+            'tokenId': nft['tokenId'],
+            'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
+        }
+        for nft in user.owned_rod_nfts
+    ]
+    
     return jsonify({
         'status': 1,
         'message': 'success',
@@ -92,10 +133,10 @@ def get_fishing_preparation(user_id):
             'max_exp': level_exp.max_exp,
             'user_gmc': float(user.user_gmc),
             'user_baits': user.user_baits,
-            'current_avatar_nft': user.current_avatar_nft,
-            'current_rod_nft': user.current_rod_nft,
-            'owned_avatar_nfts': user.owned_avatar_nfts,
-            'owned_rod_nfts': user.owned_rod_nfts,
+            'current_avatar_nft': current_avatar_nft,
+            'current_rod_nft': current_rod_nft,
+            'owned_avatar_nfts': owned_avatar_nfts,
+            'owned_rod_nfts': owned_rod_nfts,
             'battle_skill_desc_en': current_rod.battle_skill_desc_en if current_rod else None,
             'qte_skill_desc_en': current_rod.qte_skill_desc_en if current_rod else None,
             #'accessible_fishing_grounds': user.accessible_fishing_grounds,
@@ -108,6 +149,7 @@ def get_fishing_preparation(user_id):
         }
     })
 
+#3.2 游戏进入条件检查接口函数
 def check_game_entry(data):
     """
     检查玩家是否可以进入游戏。
@@ -115,20 +157,21 @@ def check_game_entry(data):
     :param data: 包含user_id的字典
     :return: 指示玩家是否可以进入游戏的JSON响应
     """
-    user_id = data.get('user_id')
+    # 将字符串形式的user_id转换为CHAR(42)
+    user_id = data.get('user_id').strip()
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 检查玩家是否同时拥有头像和鱼竿NFT
     can_enter_game = user.current_avatar_nft is not None and user.current_rod_nft is not None
     return jsonify({
-        'status': 0,
-        'message': '成功',
+        'status': 1,
+        'message': 'success',
         'data': {
             'can_enter_game': can_enter_game,
-            'avatar': user.current_avatar_nft['tokenId'] if user.current_avatar_nft else None,
-            'rod': user.current_rod_nft['tokenId'] if user.current_rod_nft else None
+            'avatar': user.current_avatar_nft if user.current_avatar_nft else None,
+            'rod': user.current_rod_nft if user.current_rod_nft else None
         }
     })
 
@@ -140,12 +183,13 @@ def change_fishing_ground(data):
     :param data: 包含user_id和ground_id的字典
     :return: 包含更新后钓鱼场地的JSON响应
     """
-    user_id = data.get('user_id')
-    ground_id = data.get('ground_id')
+    user_id = data.get('user_id').strip()
+    # 将字符串形式的ground_id转换为INT
+    ground_id = int(data.get('ground_id'))
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 获取玩家可进入的钓鱼场地
     accessible_fishing_grounds = FishingGroundConfig.query.filter(FishingGroundConfig.enter_lv <= user.user_level).all()
@@ -153,94 +197,38 @@ def change_fishing_ground(data):
 
     # 检查请求的场地是否可进入
     if ground_id not in accessible_fishing_ground_ids:
-        return jsonify({'status': 1, 'message': '玩家无权进入此钓鱼场地'}), 400
+        return jsonify({'status': 0, 'message': 'Player is not authorized to enter this fishing ground'}), 400
 
     # 更新玩家当前的钓鱼场地
     user.current_fishing_ground = ground_id
     db.session.commit()
 
     return jsonify({
-        'status': 0,
-        'message': '成功',
+        'status': 1,
+        'message': 'success',
         'data': {
             'ground_id': ground_id
         }
     })
 
-#3.9 等级经验数据接口函数
-def update_player_exp(data):
-    """
-    钓鱼后更新玩家的经验。
-    
-    :param data: 包含user_id和session_id的字典
-    :return: 包含更新后玩家等级和经验的JSON响应
-    """
-    user_id = data.get('user_id')
-    session_id = data.get('session_id')
-
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
-
-    # 验证钓鱼会话
-    session = FishingSession.query.get(session_id)
-    if not session or not session.session_status or not session.fishing_count_deducted:
-        return jsonify({'status': 1, 'message': '无效的会话或经验已添加'}), 400
-
-    try:
-        with db.session.begin_nested():
-            # 获取钓鱼经验和当前等级的最大经验值
-            fishing_exp = int(SystemConfig.query.filter_by(config_key='fishing_exp').first().config_value)
-            max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
-
-            # 计算新经验并在必要时升级
-            new_exp = user.user_exp + fishing_exp
-            while new_exp >= max_exp:
-                user.user_level += 1
-                new_exp -= max_exp
-                max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
-
-            user.user_exp = new_exp
-
-            # 关闭钓鱼会话
-            session.session_status = False
-            session.fishing_count_deducted = False
-            session.end_time = func.now()
-
-        # 提交数据库更改
-        db.session.commit()
-
-        return jsonify({
-            'status': 0,
-            'message': '成功',
-            'data': {
-                'user_level': user.user_level,
-                'user_exp': user.user_exp
-            }
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'status': 1, 'message': f'更新玩家经验失败: {str(e)}'}), 500
-
 #3.4 钓鱼次数加一接口函数
 def handle_player_status(data):
     user_id = data.get('user_id')
     try:
-        user_id = uuid.UUID(user_id)
+        user_id = user_id.strip()
     except ValueError:
-        return jsonify({'status': 1, 'message': 'Invalid user_id format'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     max_fishing_count = int(SystemConfig.query.filter_by(config_key='max_fishing_count').first().config_value)
     fishing_recovery_interval = int(SystemConfig.query.filter_by(config_key='fishing_recovery_interval').first().config_value)
     current_time = int(time.time())  # 使用当前的Unix时间戳
     
     if user.next_recovery_time and current_time >= user.next_recovery_time:
-        user.fishing_count = min(user.fishing_count + 1, max_fishing_count)
+        user.fishing_count = user.fishing_count + 1
         if user.fishing_count < max_fishing_count:
             user.next_recovery_time +=  fishing_recovery_interval
         else:
@@ -274,7 +262,7 @@ def init_fishing_session(user_id):
     - 包含会话ID和玩家当前鱼饵数量的JSON响应
     """
     try:
-        user_id = uuid.UUID(user_id)
+        user_id = user_id.strip()
     except ValueError:
         return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
 
@@ -284,11 +272,24 @@ def init_fishing_session(user_id):
 
     # 1. 检查玩家是否拥有当前使用的钓手NFT和鱼竿NFT
     
-    # 先从合约更新owned_avatar_nfts和owned_rod_nfts
+    # 更新用户的owned_avatar_nfts
+    avatar_contract = ethereum_service.get_avatar_contract()
+    owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+            
+    # 如果current_avatar_nft为空，设置为最新铸造的NFT
+    if user.current_avatar_nft is None and owned_nfts:
+        user.current_avatar_nft = owned_nfts[-1]
     
-    # 检查并更新current_avatar_nft
-    
-    # 检查并更新current_rod_nft
+    # 更新用户的owned_rod_nfts
+    rod_contract = ethereum_service.get_rod_contract()
+    owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+            
+    # 如果current_rod_nft为空，设置为最新铸造的NFT
+    if user.current_rod_nft is None and owned_nfts:
+        user.current_rod_nft = owned_nfts[-1]
+    db.session.commit()
     
     if not user.current_avatar_nft or not user.current_rod_nft:
         return jsonify({'status': 0, 'message': 'Player missing necessary NFTs'}), 400
@@ -321,13 +322,13 @@ def init_fishing_session(user_id):
             current_time = int(time.time())  # 使用当前的Unix时间戳
 
             user.fishing_count -= 1
-            session.fishing_count_deducted = True
+            
         
             if user.fishing_count < max_fishing_count and not user.next_recovery_time:
                 user.next_recovery_time = current_time + fishing_recovery_interval
                 
             #qte初始化
-            current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId'])
+            current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1)
             user.remaining_qte_count = current_rod.qte_count
             user.accumulated_qte_score = 0
             user.qte_hit_status_green = False
@@ -354,6 +355,63 @@ def init_fishing_session(user_id):
     except Exception as e:
         # 如果发生错误，回滚事务
         db.session.rollback()
-        return jsonify({'status': 1, 'message': f'创建钓鱼会话失败: {str(e)}'}), 500
+        return jsonify({'status': 0, 'message': f'Failed to create fishing session: {str(e)}'}), 500
 
 
+#3.9 等级经验数据接口函数
+def update_player_exp(data):
+    """
+    钓鱼后更新玩家的经验。
+    
+    :param data: 包含user_id和session_id的字典
+    :return: 包含更新后玩家等级和经验的JSON响应
+    """
+    user_id = data.get('user_id')
+    session_id = data.get('session_id')
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+
+    # 验证钓鱼会话
+    session = FishingSession.query.get(session_id)
+    if not session or not session.session_status :
+        return jsonify({'status': 0, 'message': 'Invalid session or experience already added'}), 400
+
+    try:
+        with db.session.begin_nested():
+            # 获取单次钓鱼经验和当前等级的最大经验值
+            fishing_exp = int(SystemConfig.query.filter_by(config_key='fishing_exp').first().config_value)
+            max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            # 计算新经验并在必要时升级
+            new_exp = user.user_exp + fishing_exp
+            while new_exp >= max_exp:
+                user.user_level += 1
+                new_exp -= max_exp
+                max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            user.user_exp = new_exp
+
+            # 关闭钓鱼会话
+            session.session_status = False
+            session.end_time = func.now()
+
+        # 提交数据库更改
+        db.session.commit()
+
+        return jsonify({
+            'status': 1,
+            'message': 'success',
+            'data': {
+                'user_level': user.user_level,
+                'user_exp': user.user_exp
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 0, 'message': f'Failed to update player experience: {str(e)}'}), 500

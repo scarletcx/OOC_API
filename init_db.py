@@ -331,54 +331,20 @@ def init_db():
                 ]
                 db.session.add_all(fishes)
                 logger.info("鱼类表已初始化")
-
+            
             # 初始化测试用户
             if User.query.count() == 0:
-                test_users = [
-                    User(
-                        user_id=uuid.uuid4(),
-                        user_level=1,
-                        user_exp=0,
-                        user_gmc=1000,
-                        user_baits=50,
-                        current_avatar_nft={"tokenId": "NFT#00001", "avatarId": 1},
-                        current_rod_nft={"tokenId": "NFT#00002", "rodId": 1},
-                        owned_avatar_nfts=[{"tokenId": "NFT#00001", "avatarId": 1}],
-                        owned_rod_nfts=[{"tokenId": "NFT#00002", "rodId": 1}],
-                        fishing_count=Config.MAX_FISHING_COUNT,
-                    ),
-                    User(
-                        user_id=uuid.uuid4(),
-                        user_level=5,
-                        user_exp=25,
-                        user_gmc=5000,
-                        user_baits=100,
-                        current_avatar_nft={"tokenId": "NFT#00003", "avatarId": 2},
-                        current_rod_nft={"tokenId": "NFT#00004", "rodId": 2},
-                        owned_avatar_nfts=[{"tokenId": "NFT#00003", "avatarId": 2}],
-                        owned_rod_nfts=[{"tokenId": "NFT#00004", "rodId": 2}],
-                        fishing_count=Config.MAX_FISHING_COUNT,
-                    ),
-                    User(
-                        user_id=uuid.uuid4(),
-                        user_level=10,
-                        user_exp=30,
-                        user_gmc=10000,
-                        user_baits=200,
-                        current_avatar_nft={"tokenId": "NFT#00005", "avatarId": 3},
-                        current_rod_nft={"tokenId": "NFT#00006", "rodId": 3},
-                        owned_avatar_nfts=[{"tokenId": "NFT#00005", "avatarId": 3}],
-                        owned_rod_nfts=[{"tokenId": "NFT#00006", "rodId": 3}],
-                        fishing_count=Config.MAX_FISHING_COUNT,
-                    )
-                ]
-                db.session.add_all(test_users)
+                test_user = User(
+                    user_id="0x1945fE87f2Ed52bda68B4bC9D79Af2d9bd544597",
+                    fishing_count=Config.MAX_FISHING_COUNT,
+                )
+                db.session.add(test_user)
                 logger.info("测试用户已初始化")
 
                 # 打印测试用户的 user_id
-                for user in test_users:
-                    logger.info(f"测试用户 ID: {user.user_id}")
-
+                #for user in test_users:
+                 #   logger.info(f"测试用户 ID: {user.user_id}")
+           
             db.session.commit()
             logger.info("数据库初始化完成")
         except Exception as e:

@@ -3,15 +3,122 @@ from app import db
 from sqlalchemy import func
 import random
 from flask import jsonify
-import uuid
+from app.services import ethereum_service
 from decimal import Decimal
 import numpy as np
+import os
+from web3.exceptions import Web3Exception, TimeExhausted
+import time
+from dotenv import load_dotenv
+# 加载环境变量
+load_dotenv(override=True)
+
+
+#3.6 鱼饵购买界面状态接口函数
+def get_bait_buy_state(user_id):
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+
+    max_buy_bait = SystemConfig.query.get('max_buy_bait')
+    bait_price = SystemConfig.query.get('bait_price')
+
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'max_buy_bait': int(max_buy_bait.config_value),
+            'bait_price': str(Decimal(bait_price.config_value))
+        }
+    })
+
+#3.7 购买鱼饵接口函数
+def buy_bait(data):
+    user_id = data.get('user_id')
+    #获取购买数量并转换成uint256数据类型，0 是 data.get('buy_amount', 0) 的默认值
+    buy_amount = int(data.get('buy_amount', 0))
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+    
+    ##向合约发起购买鱼饵操作并等待交易完成
+    # 获取Web3实例以连接以太坊网络
+    w3 = ethereum_service.get_w3()
+    user_contract = ethereum_service.get_user_contract()
+    minter_address = os.getenv('MINTER_ADDRESS')
+    
+    if not minter_address:
+        raise ValueError("MINTER_ADDRESS environment variable is not set")
+    
+    # 确保地址是校验和格式
+    checksum_address = w3.to_checksum_address(minter_address)
+    nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
+    
+    # 获取当前的 gas 价格
+    try:
+        gas_price = w3.eth.gas_price
+        # 如果需要，可以稍微提高 gas 价格
+        #gas_price = int(gas_price * 1.1)  # 提高 10%
+    except Exception as e:
+        print(f"无法获取 gas 价格: {e}")
+        # 如果无法获取 gas 价格，使用一个默认值
+        gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
+
+    txn = user_contract.functions.buyBaits(user_id, buy_amount).build_transaction({
+        'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
+        'gas': 2000000,  # 交易的最大 gas 限制
+        'gasPrice': gas_price,  # 使用计算得到的 gas 价格
+        'nonce': nonce,  # 发送者账户的交易计数
+    })
+
+    # 签名交易
+    signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+    # 发送交易
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    
+    # 增加等待时间并添加重试逻辑
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+            break
+        except TimeExhausted:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(10)  # 等待10秒后重试
+    #从合约更新user_gmc
+    gmc_contract = ethereum_service.get_gmc_contract()
+    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
+    #从合约更新鱼饵数量
+    user.user_baits = user_contract.functions.getBaitCount(user_id).call()
+    db.session.commit()
+
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'user_baits': user.user_baits,
+            'user_gmc': str(user.user_gmc)
+        }
+    })
 
 #3.8 QTE剩余次数和分数接口函数
 def handle_qte(data):
     user_id = data.get('user_id')
     qte_colour = data.get('qte_colour')
-
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
     user = User.query.get(user_id)
     if not user:
         return jsonify({'status': 0, 'message': 'User not found'}), 404
@@ -25,7 +132,7 @@ def process_qte(user, qte_colour):
     if qte_colour not in ['red', 'green', 'black']:
         return jsonify({'status': 0, 'message': 'Invalid QTE colour'}), 400
 
-    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId'])
+    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1)
     
     if user.remaining_qte_count == current_rod.qte_count:
         user.accumulated_qte_score += current_rod.qte_progress_change
@@ -57,14 +164,17 @@ def process_qte(user, qte_colour):
 def get_fish_info(data):
     user_id = data.get('user_id')
     session_id = data.get('session_id')
-
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     session = FishingSession.query.get(session_id)
-    if not session or not session.session_status or not session.fishing_count_deducted:
-        return jsonify({'status': 1, 'message': 'Invalid session or session expired'}), 400
+    if not session or not session.session_status :
+        return jsonify({'status': 0, 'message': 'Invalid session or session expired'}), 400
 
     rarity_determination = RarityDetermination.query.filter(
         RarityDetermination.fishing_ground_id == user.current_fishing_ground,
@@ -73,7 +183,7 @@ def get_fish_info(data):
     ).first()
 
     if not rarity_determination:
-        return jsonify({'status': 1, 'message': 'Unable to determine fish rarity'}), 500
+        return jsonify({'status': 0, 'message': 'Unable to determine fish rarity'}), 500
 
     rarity_id = int(np.random.choice(
         rarity_determination.possible_rarity_ids,
@@ -87,7 +197,7 @@ def get_fish_info(data):
     ).order_by(func.random()).first()
 
     if not fish:
-        return jsonify({'status': 1, 'message': 'No fish found for the given criteria'}), 500
+        return jsonify({'status': 0, 'message': 'No fish found for the given criteria'}), 500
 
     weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
 
@@ -107,7 +217,7 @@ def get_fish_info(data):
     db.session.commit()
 
     return jsonify({
-        'status': 0,
+        'status': 1,
         'message': 'success',
         'data': {
             'fish_id': fish.fish_id,
@@ -119,56 +229,5 @@ def get_fish_info(data):
             'price': str(fish.price),
             'output': str(fish.output),
             'weight': str(round(weight, 2))
-        }
-    })
-
-#3.6 鱼饵购买界面状态接口函数
-def get_bait_buy_state(user_id):
-    try:
-        user_id = uuid.UUID(user_id)
-    except ValueError:
-        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
-
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
-
-    max_buy_bait = SystemConfig.query.get('max_buy_bait')
-    bait_price = SystemConfig.query.get('bait_price')
-
-    return jsonify({
-        'status': 0,
-        'message': 'success',
-        'data': {
-            'max_buy_bait': int(max_buy_bait.config_value),
-            'bait_price': str(Decimal(bait_price.config_value))
-        }
-    })
-
-#3.7 购买鱼饵接口函数
-def buy_bait(data):
-    user_id = data.get('user_id')
-    buy_amount = data.get('buy_amount')
-
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'status': 1, 'message': 'User not found'}), 404
-
-    bait_price = Decimal(SystemConfig.query.get('bait_price').config_value)
-    total_price = bait_price * Decimal(buy_amount)
-
-    if user.user_gmc < total_price:
-        return jsonify({'status': 1, 'message': 'Insufficient GMC for purchase'}), 400
-
-    user.user_gmc -= total_price
-    user.user_baits += buy_amount
-    db.session.commit()
-
-    return jsonify({
-        'status': 0,
-        'message': 'success',
-        'data': {
-            'user_baits': user.user_baits,
-            'user_gmc': str(user.user_gmc)
         }
     })

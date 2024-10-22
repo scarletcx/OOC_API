@@ -5,15 +5,15 @@ import uuid
 class User(db.Model):
     __tablename__ = 'users'
 
-    user_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.CHAR(42), primary_key=True)
     user_level = db.Column(db.Integer, nullable=False, default=1)
     user_exp = db.Column(db.Integer, nullable=False, default=0)
-    user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
-    user_baits = db.Column(db.Integer, nullable=False, default=0)
+    user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  
+    user_baits = db.Column(db.Integer, nullable=False, default=30)
     current_avatar_nft = db.Column(JSONB, nullable=True)
     current_rod_nft = db.Column(JSONB, nullable=True)
-    owned_avatar_nfts = db.Column(JSONB, nullable=False, default=[])
-    owned_rod_nfts = db.Column(JSONB, nullable=False, default=[])
+    owned_avatar_nfts = db.Column(JSONB, nullable=True)
+    owned_rod_nfts = db.Column(JSONB, nullable=True)
     fishing_count = db.Column(db.Integer, nullable=False, default=0)
     next_recovery_time = db.Column(db.BigInteger, nullable=True)
     accessible_fishing_grounds = db.Column(db.ARRAY(db.Integer), nullable=True)
@@ -30,11 +30,10 @@ class FishingSession(db.Model):
     __tablename__ = 'fishing_sessions'
 
     session_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.CHAR(42), db.ForeignKey('users.user_id'), nullable=False)
     start_time = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
     end_time = db.Column(db.DateTime(timezone=True), nullable=True)
     session_status = db.Column(db.Boolean, nullable=False, default=True)
-    fishing_count_deducted = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 
@@ -103,7 +102,7 @@ class FishingRecord(db.Model):
     __tablename__ = 'fishing_records'
 
     record_id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.CHAR(42), db.ForeignKey('users.user_id'), nullable=False)
     fish_id = db.Column(db.Text, db.ForeignKey('fishes.fish_id'), nullable=False)
     fish_name = db.Column(db.Text, nullable=False)
     fish_picture_res = db.Column(db.Text, nullable=False)
@@ -120,7 +119,7 @@ class FishingRecord(db.Model):
 class FreeMintRecord(db.Model):
     __tablename__ = 'free_mint_records'
 
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.user_id'), primary_key=True)
+    user_id = db.Column(db.CHAR(42), db.ForeignKey('users.user_id'), primary_key=True)
     avatar_minted = db.Column(db.Boolean, nullable=False, default=False)
     rod_minted = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())

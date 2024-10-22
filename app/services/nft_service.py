@@ -9,35 +9,34 @@ from web3.exceptions import Web3Exception, TimeExhausted
 import time
 
 # 加载环境变量
-load_dotenv()
+load_dotenv(override=True)
 
 #2.1 免费mint&记录接口函数
-def handle_free_mint(user_id, mint_type, wallet_address):
+def handle_free_mint(user_id, mint_type):
     """
     处理免费NFT铸造请求，并监听相应的事件
     
     此函数处理用户的免费NFT铸造请求，包括在以太坊测试网上的铸造操作。
     
     参数:
-    - user_id: 用户ID (UUID格式的字符串)
+    - user_id: 用户ID (钱包地址)
     - mint_type: 铸造类型，可选值为 'avatar' 或 'rod'
-    - wallet_address: 玩家的以太坊钱包地址
     
     返回:
     - 包含操作结果的JSON响应
     """
     try:
-        # 将字符串形式的user_id转换为UUID对象
-        user_id = uuid.UUID(user_id)
+        # 将字符串形式的user_id转换为CHAR(42)
+        user_id = user_id.strip()
     except ValueError:
         # 如果user_id格式无效，返回错误响应
-        return jsonify({'status': 1, 'message': '无效的user_id格式'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
 
     # 查询用户信息
     user = User.query.get(user_id)
     if not user:
         # 如果用户不存在，返回错误响应
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 获取或创建用户的免费铸造记录
     free_mint_record = FreeMintRecord.query.get(user_id)
@@ -49,53 +48,102 @@ def handle_free_mint(user_id, mint_type, wallet_address):
     # 验证铸造类型
     if mint_type not in ['avatar', 'rod']:
         # 如果铸造类型无效，返回错误响应
-        return jsonify({'status': 1, 'message': '无效的铸造类型'}), 400
+        return jsonify({'status': 0, 'message': 'Invalid mint type'}), 400
     
     # 检查是否已经铸造过该类型的NFT
     if mint_type == 'avatar' and free_mint_record.avatar_minted:
-        return jsonify({'status': 1, 'message': '钓手NFT已经铸造过了'}), 400
+        return jsonify({'status': 0, 'message': 'Avatar NFT already minted'}), 400
     
     if mint_type == 'rod' and free_mint_record.rod_minted:
-        return jsonify({'status': 1, 'message': '鱼竿NFT已经铸造过了'}), 400
+        return jsonify({'status': 0, 'message': 'Rod NFT already minted'}), 400
     
     # 执行铸造操作
     try:
         if mint_type == 'avatar':
             # 铸造钓手NFT，并获得交易哈希和监听得到的参数
-            tx_hash, tokenId = mint_avatar(wallet_address)
+            tx_hash, tokenId = mint_avatar(user_id)
             free_mint_record.avatar_minted = True
-            event_data = {'tokenId': tokenId}
-            avatarPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+            event_data = {'tokenId': tokenId, 'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"}
+            #avatarPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+            
+            # 更新用户的owned_avatar_nfts
+            avatar_contract = ethereum_service.get_avatar_contract()
+            owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+            user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+            
+            # 如果current_avatar_nft为空，设置为最新铸造的NFT
+            if user.current_avatar_nft is None:
+                user.current_avatar_nft = user.owned_avatar_nfts[-1]
         else:
             # 铸造鱼竿NFT，并获得交易哈希和监听得到的参数
-            tx_hash, tokenId, rodId = mint_rod(wallet_address)
+            tx_hash, tokenId, rodId = mint_rod(user_id)
             free_mint_record.rod_minted = True
-            event_data = {'tokenId': tokenId, 'rodId': rodId}
-            rodPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
+            event_data = {'tokenId': tokenId, 'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"}
+            #rodPicUrl = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
+            
+            # 更新用户的owned_rod_nfts
+            rod_contract = ethereum_service.get_rod_contract()
+            owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
+            user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+            
+            # 如果current_rod_nft为空，设置为最新铸造的NFT
+            if user.current_rod_nft is None:
+                user.current_rod_nft = user.owned_rod_nfts[-1]
     
         db.session.commit()
-    
+        
+        current_avatar_nft = user.current_avatar_nft
+        if current_avatar_nft and 'tokenId' in current_avatar_nft:
+            tokenId = current_avatar_nft['tokenId']
+            current_avatar_nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+        
+        current_rod_nft = user.current_rod_nft
+        if current_rod_nft and 'rodId' in current_rod_nft:
+            rodId = current_rod_nft['rodId']
+            current_rod_nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
+            del current_rod_nft['rodId']
+         
+        owned_avatar_nfts = [
+            {
+                'tokenId': nft['tokenId'],
+                'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+            }
+            for nft in user.owned_avatar_nfts
+        ]
+        
+        owned_rod_nfts = [
+            {
+                'tokenId': nft['tokenId'],
+                'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
+            }
+            for nft in user.owned_rod_nfts
+        ]
+            
         response_data = {
-            'status': 0,
+            'status': 1,
             'message': 'success',
             'data': {
                 'avatar_minted': int(free_mint_record.avatar_minted),
                 'rod_minted': int(free_mint_record.rod_minted),
                 'tx_hash': tx_hash,
-                'event_data': event_data
+                'event_data': event_data,
+                'owned_avatar_nfts': owned_avatar_nfts,
+                'owned_rod_nfts': owned_rod_nfts,
+                'current_avatar_nft': current_avatar_nft,
+                'current_rod_nft': current_rod_nft
             }
         }
-
+        '''
         # 根据mint_type添加相应的URL
         if mint_type == 'avatar':
             response_data['data']['avatarPicUrl'] = avatarPicUrl
         else:
             response_data['data']['rodPicUrl'] = rodPicUrl
-
+        '''
         return jsonify(response_data)
     except Exception as e:
         db.session.rollback()
-        return jsonify({'status': 1, 'message': f'铸造失败: {str(e)}'}), 500
+        return jsonify({'status': 0, 'message': f'Minting failed: {str(e)}'}), 500
 
 def mint_avatar(wallet_address):
     """
@@ -111,8 +159,8 @@ def mint_avatar(wallet_address):
     # 获取Web3实例以连接以太坊网络
     w3 = ethereum_service.get_w3()
     avatar_contract = ethereum_service.get_avatar_contract()
-
     minter_address = os.getenv('MINTER_ADDRESS')
+    
     if not minter_address:
         raise ValueError("MINTER_ADDRESS environment variable is not set")
     
@@ -220,24 +268,69 @@ def mint_rod(wallet_address):
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
 def change_nft_status(data):
     user_id = data.get('user_id')
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
     # 查询用户
     user = User.query.get(user_id)
     if not user:
         return jsonify({'status': 0, 'message': 'User not found'}), 404
-    # 从合约更新owned_avatar_nfts和owned_rod_nfts
+    # 更新用户的owned_avatar_nfts
+    avatar_contract = ethereum_service.get_avatar_contract()
+    owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+            
+    # 如果current_avatar_nft为空，设置为最新铸造的NFT
+    if user.current_avatar_nft is None and owned_nfts:
+        user.current_avatar_nft = owned_nfts[-1]
     
-    # 检查并更新current_avatar_nft
+    # 更新用户的owned_rod_nfts
+    rod_contract = ethereum_service.get_rod_contract()
+    owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+            
+    # 如果current_rod_nft为空，设置为最新铸造的NFT
+    if user.current_rod_nft is None and owned_nfts:
+        user.current_rod_nft = owned_nfts[-1]
+    db.session.commit()
     
-    # 检查并更新current_rod_nft
+    current_avatar_nft = user.current_avatar_nft
+    if current_avatar_nft and 'tokenId' in current_avatar_nft:
+        tokenId = current_avatar_nft['tokenId']
+        current_avatar_nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+        
+    current_rod_nft = user.current_rod_nft
+    if current_rod_nft and 'rodId' in current_rod_nft:
+        rodId = current_rod_nft['rodId']
+        current_rod_nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
+        del current_rod_nft['rodId']
+         
+    owned_avatar_nfts = [
+        {
+            'tokenId': nft['tokenId'],
+            'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+        }
+        for nft in user.owned_avatar_nfts
+    ]
+        
+    owned_rod_nfts = [
+        {
+            'tokenId': nft['tokenId'],
+            'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
+        }
+        for nft in user.owned_rod_nfts
+    ]
+    
     # 返回成功响应
     return jsonify({
         'status': 1,
         'message': 'success',
         'data': {
-            'current_avatar_nft': user.current_avatar_nft,
-            'current_rod_nft': user.current_rod_nft,
-            'owned_avatar_nfts': user.owned_avatar_nfts,
-            'owned_rod_nfts': user.owned_rod_nfts
+            'current_avatar_nft': current_avatar_nft,
+            'current_rod_nft': current_rod_nft,
+            'owned_avatar_nfts': owned_avatar_nfts,
+            'owned_rod_nfts': owned_rod_nfts
         }
     })
 
@@ -257,15 +350,18 @@ def change_nft(data):
     user_id = data.get('user_id')
     nft_type = data.get('type')
     nft_token = data.get('nft_token')
-
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
     # 查询用户
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'status': 1, 'message': '未找到用户'}), 404
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
 
     # 验证NFT类型
     if nft_type not in ['avatar', 'rod']:
-        return jsonify({'status': 1, 'message': '无效的NFT类型', 'data': {'error_code': 2002, 'error_message': "类型必须是 'avatar' 或 'rod'"}}), 400
+        return jsonify({'status': 0, 'message': 'Invalid NFT type'}), 400
 
     
     # 根据NFT类型选择相应的NFT列表
@@ -274,7 +370,7 @@ def change_nft(data):
 
     # 检查用户是否拥有该NFT
     if not nft:
-        return jsonify({'status': 1, 'message': '未找到NFT', 'data': {'error_code': 2001, 'error_message': '指定的NFT不属于该用户'}}), 404
+        return jsonify({'status': 0, 'message': 'NFT not found'}), 404
 
     # 更新用户当前使用的NFT
     if nft_type == 'avatar':
@@ -284,13 +380,19 @@ def change_nft(data):
 
     # 提交更改到数据库
     db.session.commit()
+    
+    if nft_type == 'avatar':
+        nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+    else:
+        nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
+        del nft['rodId']
 
     # 返回成功响应
     return jsonify({
-        'status': 0,
+        'status': 1,
         'message': 'success',
         'data': {
             'type': nft_type,
-            'new_nft_token': nft_token
+            'current_nft': nft
         }
     })
