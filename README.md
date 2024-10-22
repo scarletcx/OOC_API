@@ -206,7 +206,7 @@ docker-compose up -d
 ### 9.初始化数据库
 首次运行时，你需要初始化数据库。进入 web 容器并运行初始化脚本：
 ```
-docker-compose exec web python init_db.py
+
 ```
 
 ### 10.验证部署访问接口
