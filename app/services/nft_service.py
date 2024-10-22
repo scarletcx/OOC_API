@@ -283,7 +283,7 @@ def change_nft_status(data):
             
     # 如果current_avatar_nft为空，设置为最新铸造的NFT
     if user.current_avatar_nft is None and owned_nfts:
-        user.current_avatar_nft = owned_nfts[-1]
+        user.current_avatar_nft = user.current_avatar_nft[-1]
     
     # 更新用户的owned_rod_nfts
     rod_contract = ethereum_service.get_rod_contract()
@@ -292,7 +292,7 @@ def change_nft_status(data):
             
     # 如果current_rod_nft为空，设置为最新铸造的NFT
     if user.current_rod_nft is None and owned_nfts:
-        user.current_rod_nft = owned_nfts[-1]
+        user.current_rod_nft = user.current_rod_nft[-1]
     db.session.commit()
     
     current_avatar_nft = user.current_avatar_nft
