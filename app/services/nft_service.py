@@ -70,7 +70,7 @@ def handle_free_mint(user_id, mint_type):
             avatar_contract = ethereum_service.get_avatar_contract()
             owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
             user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
-            
+            db.session.commit()
             # 如果current_avatar_nft为空，设置为最新铸造的NFT
             if user.current_avatar_nft is None:
                 user.current_avatar_nft = user.owned_avatar_nfts[-1]
@@ -85,7 +85,7 @@ def handle_free_mint(user_id, mint_type):
             rod_contract = ethereum_service.get_rod_contract()
             owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
             user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
-            
+            db.session.commit()
             # 如果current_rod_nft为空，设置为最新铸造的NFT
             if user.current_rod_nft is None:
                 user.current_rod_nft = user.owned_rod_nfts[-1]
@@ -280,19 +280,19 @@ def change_nft_status(data):
     avatar_contract = ethereum_service.get_avatar_contract()
     owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
     user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
-            
+    db.session.commit()        
     # 如果current_avatar_nft为空，设置为最新铸造的NFT
-    if user.current_avatar_nft is None and owned_nfts:
-        user.current_avatar_nft = user.current_avatar_nft[-1]
+    if user.current_avatar_nft is None and user.owned_avatar_nfts:
+        user.current_avatar_nft = user.owned_avatar_nfts[-1]
     
     # 更新用户的owned_rod_nfts
     rod_contract = ethereum_service.get_rod_contract()
     owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
     user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
-            
+    db.session.commit()        
     # 如果current_rod_nft为空，设置为最新铸造的NFT
-    if user.current_rod_nft is None and owned_nfts:
-        user.current_rod_nft = user.current_rod_nft[-1]
+    if user.current_rod_nft is None and user.owned_rod_nfts:
+        user.current_rod_nft = user.owned_rod_nfts[-1]
     db.session.commit()
     
     current_avatar_nft = user.current_avatar_nft
