@@ -6,10 +6,10 @@
 - [X] 3.1增加最大钓鱼次数
 - [X] 3.1增加查询合约代码
 ```
-current_avatar_nft、current_rod_nft---->xx合约（xx函数）
 owned_avatar_nfts---->FishermanNFT合约（4.getOwnedNFTs）
 owned_rod_nfts---->FishingRodNFT合约（4.getOwnedNFTs）
 user_gmc---->GMC合约（balanceOf）   
+user_baits---->User合约（getBaitCount）
 ```
 - [X] 3.4保留"action_type": 2，"action_type": 1合并到3.5"action_type": 0删除
 - [X] 3.5初始化接口检查双NFT需要加上查询合约的代码
