@@ -8,6 +8,35 @@ from sqlalchemy import func
 from app.services import ethereum_service
 import time
 
+#2.1 用户注册接口函数
+def register_player(data):
+    user_id = data.get('user_id')
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    #检查用户是否存在
+    user = User.query.get(user_id)
+    if user:
+        return jsonify({'status': 0, 'message': 'User already exists'}), 400    
+    #创建用户
+    user = User(user_id=user_id)
+    initial_gmc_config = SystemConfig.query.filter_by(config_key='initial_gmc').first()
+    initial_bait_count_config = SystemConfig.query.filter_by(config_key='initial_bait_count').first()
+    initial_fishing_count_config = SystemConfig.query.filter_by(config_key='initial_fishing_count').first()
+    
+    if not initial_gmc_config or not initial_bait_count_config or not initial_fishing_count_config:
+        return jsonify({'status': 0, 'message': 'System configuration error'}), 500
+    
+    user.user_gmc = initial_gmc_config.config_value
+    user.user_baits = initial_bait_count_config.config_value
+    user.fishing_count = initial_fishing_count_config.config_value
+    
+    db.session.add(user)
+    db.session.commit()
+    #在合约上创建用户
+    return jsonify({'status': 1, 'message': 'success'}), 200
+
 #3.1 钓鱼准备界面状态（初始化）接口函数
 def get_fishing_preparation(user_id):
     """

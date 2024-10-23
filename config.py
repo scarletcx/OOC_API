@@ -24,7 +24,9 @@ class Config:
     MAX_BUY_BAIT = 99
     BAIT_PRICE = 5.0
     FISHING_BAIT_COST = 1
-
+    INITIAL_BAIT_COUNT = 30
+    INITIAL_FISHING_COUNT = 10
+    INITIAL_GMC = 0
     # 其他配置项可以在这里添加
     # ...
 

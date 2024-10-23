@@ -11,7 +11,7 @@ import time
 # 加载环境变量
 load_dotenv(override=True)
 
-#2.1 免费mint&记录接口函数
+#2.2 免费mint&记录接口函数
 def handle_free_mint(user_id, mint_type):
     """
     处理免费NFT铸造请求，并监听相应的事件

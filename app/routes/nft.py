@@ -2,7 +2,7 @@ from app.routes import bp
 from flask import jsonify, request
 from app.services import nft_service
 
-#2.1 免费mint&记录接口
+#2.2 免费mint&记录接口
 @bp.route('/app/v1/mint/free', methods=['POST'])
 def free_mint():
     """

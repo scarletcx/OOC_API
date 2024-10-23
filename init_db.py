@@ -33,16 +33,21 @@ def init_db():
             print(f"BAIT_PRICE: {Config.BAIT_PRICE}")
             print(f"FISHING_BAIT_COST: {Config.FISHING_BAIT_COST}")
             print(f"DATABASE_URL: {Config.SQLALCHEMY_DATABASE_URI}")
-
+            print(f"INITIAL_BAIT_COUNT: {Config.INITIAL_BAIT_COUNT}")
+            print(f"INITIAL_FISHING_COUNT: {Config.INITIAL_FISHING_COUNT}")
+            print(f"INITIAL_GMC: {Config.INITIAL_GMC}")
             # 初始化系统配置
             if SystemConfig.query.count() == 0:
                 configs = [
+                    SystemConfig(config_key='initial_fishing_count', config_value=str(Config.INITIAL_FISHING_COUNT), description='初始钓鱼次数'),
                     SystemConfig(config_key='max_fishing_count', config_value=str(Config.MAX_FISHING_COUNT), description='最大钓鱼次数'),
                     SystemConfig(config_key='fishing_recovery_interval', config_value=str(Config.FISHING_RECOVERY_INTERVAL), description='钓鱼次数恢复间隔（秒）'),
                     SystemConfig(config_key='fishing_exp', config_value=str(Config.FISHING_EXP), description='每次钓鱼获得的经验值'),
+                    SystemConfig(config_key='initial_bait_count', config_value=str(Config.INITIAL_BAIT_COUNT), description='初始鱼饵数量'),
                     SystemConfig(config_key='max_buy_bait', config_value=str(Config.MAX_BUY_BAIT), description='单次最大购买鱼饵数量'),
                     SystemConfig(config_key='bait_price', config_value=str(Config.BAIT_PRICE), description='鱼饵单价'),
-                    SystemConfig(config_key='fishing_bait_cost', config_value=str(Config.FISHING_BAIT_COST), description='单次钓鱼消耗鱼饵数量')
+                    SystemConfig(config_key='fishing_bait_cost', config_value=str(Config.FISHING_BAIT_COST), description='单次钓鱼消耗鱼饵数量'),
+                    SystemConfig(config_key='initial_gmc', config_value=str(Config.INITIAL_GMC), description='初始GMC数量')
                 ]
                 db.session.add_all(configs)
                 logger.info("系统配置已初始化")

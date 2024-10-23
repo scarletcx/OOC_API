@@ -5,6 +5,12 @@ from app.routes import bp
 from flask import jsonify, request
 from app.services import player_service
 
+#2.1 用户注册接口
+@bp.route('/app/v1/player/register', methods=['POST'])
+def register_player():
+    data = request.json
+    return player_service.register_player(data)
+
 #3.1 钓鱼准备界面状态（初始化）接口
 @bp.route('/app/v1/fishing', methods=['POST'])
 def get_fishing_preparation():
