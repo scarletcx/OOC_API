@@ -217,22 +217,7 @@ def get_fish_info(data):
     t_price = fish.price
     t_output = fish.output
     t_weight = weight
-    '''
-    fishing_record = FishingRecord(
-        user_id=user_id,
-        fish_id=fish.fish_id,
-        fish_name=fish.fish_name,
-        fish_picture_res=fish.fish_picture_res,
-        rarity_id=fish.rarity_id,
-        fishing_ground_id=fish.fishing_ground_id,
-        fishing_ground_name=fish.fishing_ground_name,
-        price=fish.price,
-        output=fish.output,
-        weight=weight
-    )
-    db.session.add(fishing_record)
-    db.session.commit()
-   '''
+    
     return jsonify({
         'status': 1,
         'message': 'success',
@@ -326,3 +311,34 @@ def sell_fish(data):
             'user_gmc': str(user.user_gmc)
         }
     })  
+    
+#4.3 放入鱼池接口函数
+def put_fish_pool(data):
+    user_id = data['user_id']
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
+    fishing_record = FishingRecord(
+        user_id=user_id,
+        fish_id=t_fish_id,
+        fish_name=t_fish_name,
+        fish_picture_res=t_fish_picture_res,
+        rarity_id=t_rarity_id,
+        fishing_ground_id=t_fishing_ground_id,
+        fishing_ground_name=t_fishing_ground_name,
+        price=t_price,
+        output=t_output,
+        weight=t_weight
+    )
+    db.session.add(fishing_record)  
+    db.session.commit()
+    
+    return jsonify({
+        'status': 1,
+        'message': 'success'
+    })

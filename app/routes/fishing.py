@@ -32,3 +32,9 @@ def get_fish_info():
 def sell_fish():
     data = request.json
     return fishing_service.sell_fish(data)
+
+#4.3 放入鱼池接口
+@bp.route('/app/v1/fish/pool', methods=['POST'])
+def put_fish_pool():
+    data = request.json
+    return fishing_service.put_fish_pool(data)  
