@@ -257,6 +257,9 @@ def sell_fish(data):
     if not user:
         return jsonify({'status': 0, 'message': 'User not found'}), 404
     # 卖鱼逻辑
+    #检查用户是否拥有鱼
+    if not t_fish_id:
+        return jsonify({'status': 0, 'message': 'No fish found'}), 400
     ##向合约发起mintGMC操作并等待交易完成
     # 获取Web3实例以连接以太坊网络
     w3 = ethereum_service.get_w3()
@@ -286,7 +289,9 @@ def sell_fish(data):
         'gasPrice': gas_price,  # 使用计算得到的 gas 价格
         'nonce': nonce,  # 发送者账户的交易计数
     })
-
+    #将缓存数据恢复默认值（只用修改t_fish_id）
+    t_fish_id = None
+    
     # 签名交易
     signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
     # 发送交易
