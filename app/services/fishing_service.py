@@ -10,9 +10,11 @@ import os
 from web3.exceptions import Web3Exception, TimeExhausted
 import time
 from dotenv import load_dotenv
-from app.services.variables import *
+from app.services.variables import t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
 # 加载环境变量
 load_dotenv(override=True)
+
+
 
 
 #3.6 鱼饵购买界面状态接口函数
@@ -205,6 +207,7 @@ def get_fish_info(data):
     weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
     
     #将鱼的信息赋值给变量
+    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
     t_fish_id = fish.fish_id
     t_fish_name = fish.fish_name
     t_fish_picture_res = fish.fish_picture_res
@@ -258,6 +261,7 @@ def sell_fish(data):
         return jsonify({'status': 0, 'message': 'User not found'}), 404
     # 卖鱼逻辑
     #检查用户是否拥有鱼
+    global t_fish_id, t_price
     if not t_fish_id:
         return jsonify({'status': 0, 'message': 'No fish found'}), 400
     ##向合约发起mintGMC操作并等待交易完成
@@ -289,13 +293,15 @@ def sell_fish(data):
         'gasPrice': gas_price,  # 使用计算得到的 gas 价格
         'nonce': nonce,  # 发送者账户的交易计数
     })
-    #将缓存数据恢复默认值（只用修改t_fish_id）
-    t_fish_id = None
+    
     
     # 签名交易
     signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
     # 发送交易
-    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    try:
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    except Exception as e:
+        return jsonify({'status': 0, 'message': f'Failed to send transaction: {e}'}), 500
     
     # 增加等待时间并添加重试逻辑
     max_attempts = 3
@@ -305,8 +311,11 @@ def sell_fish(data):
             break
         except TimeExhausted:
             if attempt == max_attempts - 1:
-                raise
+                return jsonify({'status': 0, 'message': 'Transaction timed out'}), 500
             time.sleep(10)  # 等待10秒后重试
+            
+    #将缓存数据恢复默认值（只用修改t_fish_id）
+    t_fish_id = None
     #从合约更新user_gmc
     gmc_contract = ethereum_service.get_gmc_contract()
     user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
