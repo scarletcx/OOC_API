@@ -20,21 +20,7 @@ def register_player(data):
     user = User.query.get(user_id)
     if user:
         return jsonify({'status': 0, 'message': 'User already exists'}), 400    
-    #创建用户
-    user = User(user_id=user_id)
-    initial_gmc_config = SystemConfig.query.filter_by(config_key='initial_gmc').first()
-    initial_bait_count_config = SystemConfig.query.filter_by(config_key='initial_bait_count').first()
-    initial_fishing_count_config = SystemConfig.query.filter_by(config_key='initial_fishing_count').first()
     
-    if not initial_gmc_config or not initial_bait_count_config or not initial_fishing_count_config:
-        return jsonify({'status': 0, 'message': 'System configuration error'}), 500
-    
-    user.user_gmc = initial_gmc_config.config_value
-    user.user_baits = initial_bait_count_config.config_value
-    user.fishing_count = initial_fishing_count_config.config_value
-    
-    db.session.add(user)
-    db.session.commit()
     #在合约上创建用户
     ##向合约发起添加用户操作并等待交易完成
     # 获取Web3实例以连接以太坊网络
@@ -59,28 +45,47 @@ def register_player(data):
         # 如果无法获取 gas 价格，使用一个默认值
         gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
 
-    txn = user_contract.functions.addUser(user_id).build_transaction({
-        'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
-        'gas': 2000000,  # 交易的最大 gas 限制
-        'gasPrice': gas_price,  # 使用计算得到的 gas 价格
-        'nonce': nonce,  # 发送者账户的交易计数
-    })
+    try:
+        txn = user_contract.functions.addUser(user_id).build_transaction({
+            'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
+            'gas': 2000000,  # 交易的最大 gas 限制
+            'gasPrice': gas_price,  # 使用计算得到的 gas 价格
+            'nonce': nonce,  # 发送者账户的交易计数
+        })
 
-    # 签名交易
-    signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
-    # 发送交易
-    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        # 签名交易
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+        # 发送交易
+        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        
+        # 增加等待时间并添加重试逻辑
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+                break
+            except TimeExhausted:
+                if attempt == max_attempts - 1:
+                    raise
+                time.sleep(10)  # 等待10秒后重试
+    except Exception as e:
+        return jsonify({'status': 0, 'message': f'Error creating user on contract: {str(e)}'}), 500
     
-    # 增加等待时间并添加重试逻辑
-    max_attempts = 3
-    for attempt in range(max_attempts):
-        try:
-            tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
-            break
-        except TimeExhausted:
-            if attempt == max_attempts - 1:
-                raise
-            time.sleep(10)  # 等待10秒后重试
+    #在后端创建用户
+    user = User(user_id=user_id)
+    initial_gmc_config = SystemConfig.query.filter_by(config_key='initial_gmc').first()
+    initial_bait_count_config = SystemConfig.query.filter_by(config_key='initial_bait_count').first()
+    initial_fishing_count_config = SystemConfig.query.filter_by(config_key='initial_fishing_count').first()
+    
+    if not initial_gmc_config or not initial_bait_count_config or not initial_fishing_count_config:
+        return jsonify({'status': 0, 'message': 'System configuration error'}), 500
+    
+    user.user_gmc = initial_gmc_config.config_value
+    user.user_baits = initial_bait_count_config.config_value
+    user.fishing_count = initial_fishing_count_config.config_value
+    
+    db.session.add(user)
+    db.session.commit()
     return jsonify({'status': 1, 'message': 'success'}), 200
 
 #3.1 钓鱼准备界面状态（初始化）接口函数

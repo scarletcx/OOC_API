@@ -10,6 +10,7 @@ import os
 from web3.exceptions import Web3Exception, TimeExhausted
 import time
 from dotenv import load_dotenv
+from app.services.variables import *
 # 加载环境变量
 load_dotenv(override=True)
 
@@ -176,19 +177,21 @@ def get_fish_info(data):
     if not session or not session.session_status :
         return jsonify({'status': 0, 'message': 'Invalid session or session expired'}), 400
 
+    # 根据用户当前的钓鱼场地和累计的QTE分数，查询稀有度确定记录
     rarity_determination = RarityDetermination.query.filter(
-        RarityDetermination.fishing_ground_id == user.current_fishing_ground,
-        RarityDetermination.qte_min <= user.accumulated_qte_score,
-        RarityDetermination.qte_max >= user.accumulated_qte_score
-    ).first()
+        RarityDetermination.fishing_ground_id == user.current_fishing_ground,  # 钓鱼场地ID匹配
+        RarityDetermination.qte_min <= user.accumulated_qte_score,  # QTE分数大于等于最小值
+        RarityDetermination.qte_max >= user.accumulated_qte_score  # QTE分数小于等于最大值
+    ).first()  # 获取匹配的记录
 
     if not rarity_determination:
         return jsonify({'status': 0, 'message': 'Unable to determine fish rarity'}), 500
 
+    # 从可能的稀有度ID中随机选择一个稀有度ID
     rarity_id = int(np.random.choice(
-        rarity_determination.possible_rarity_ids,
-        p=[float(prob) for prob in rarity_determination.appearance_probabilities],
-        size=1
+        rarity_determination.possible_rarity_ids,  # 可能的稀有度ID列表
+        p=[float(prob) for prob in rarity_determination.appearance_probabilities],  # 各稀有度ID出现的概率
+        size=1  # 选择一个稀有度ID
     )[0])  # 将 numpy.int32 转换为 Python int
 
     fish = Fish.query.filter_by(
@@ -200,7 +203,18 @@ def get_fish_info(data):
         return jsonify({'status': 0, 'message': 'No fish found for the given criteria'}), 500
 
     weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
-
+    
+    #将鱼的信息赋值给变量
+    t_fish_id = fish.fish_id
+    t_fish_name = fish.fish_name
+    t_fish_picture_res = fish.fish_picture_res
+    t_rarity_id = fish.rarity_id
+    t_fishing_ground_id = fish.fishing_ground_id
+    t_fishing_ground_name = fish.fishing_ground_name
+    t_price = fish.price
+    t_output = fish.output
+    t_weight = weight
+    '''
     fishing_record = FishingRecord(
         user_id=user_id,
         fish_id=fish.fish_id,
@@ -215,19 +229,86 @@ def get_fish_info(data):
     )
     db.session.add(fishing_record)
     db.session.commit()
-
+   '''
     return jsonify({
         'status': 1,
         'message': 'success',
         'data': {
-            'fish_id': fish.fish_id,
-            'fish_name': fish.fish_name,
-            'fish_picture_res': fish.fish_picture_res,
-            'rarity_id': fish.rarity_id,
-            'fishing_ground_id': fish.fishing_ground_id,
-            'fishing_ground_name': fish.fishing_ground_name,
-            'price': str(fish.price),
-            'output': str(fish.output),
-            'weight': str(round(weight, 2))
+            'fish_id': t_fish_id,
+            'fish_name': t_fish_name,
+            'fish_picture_res': t_fish_picture_res,
+            'rarity_id': t_rarity_id,
+            'fishing_ground_id': t_fishing_ground_id,
+            'fishing_ground_name': t_fishing_ground_name,
+            'price': str(t_price),
+            'output': str(t_output),
+            'weight': str(round(t_weight, 2))
         }
     })
+    
+#4.2 卖鱼接口函数
+def sell_fish(data):
+    user_id = data.get('user_id')
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404
+    # 卖鱼逻辑
+    ##向合约发起mintGMC操作并等待交易完成
+    # 获取Web3实例以连接以太坊网络
+    w3 = ethereum_service.get_w3()
+    gmc_contract = ethereum_service.get_gmc_contract()
+    minter_address = os.getenv('MINTER_ADDRESS')
+    
+    if not minter_address:
+        raise ValueError("MINTER_ADDRESS environment variable is not set")
+    
+    # 确保地址是校验和格式
+    checksum_address = w3.to_checksum_address(minter_address)
+    nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
+    
+    # 获取当前的 gas 价格
+    try:
+        gas_price = w3.eth.gas_price
+        # 如果需要，可以稍微提高 gas 价格
+        #gas_price = int(gas_price * 1.1)  # 提高 10%
+    except Exception as e:
+        print(f"无法获取 gas 价格: {e}")
+        # 如果无法获取 gas 价格，使用一个默认值
+        gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
+
+    txn = gmc_contract.functions.mintGMC(user_id, t_price).build_transaction({
+        'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
+        'gas': 2000000,  # 交易的最大 gas 限制
+        'gasPrice': gas_price,  # 使用计算得到的 gas 价格
+        'nonce': nonce,  # 发送者账户的交易计数
+    })
+
+    # 签名交易
+    signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+    # 发送交易
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    
+    # 增加等待时间并添加重试逻辑
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+            break
+        except TimeExhausted:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(10)  # 等待10秒后重试
+    #从合约更新user_gmc
+    gmc_contract = ethereum_service.get_gmc_contract()
+    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'user_gmc': str(user.user_gmc)
+        }
+    })  

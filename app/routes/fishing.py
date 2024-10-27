@@ -26,3 +26,9 @@ def fishing_qte():
 def get_fish_info():
     data = request.json
     return fishing_service.get_fish_info(data)
+
+#4.2 卖鱼接口
+@bp.route('/app/v1/fish/sell', methods=['POST'])
+def sell_fish():
+    data = request.json
+    return fishing_service.sell_fish(data)
