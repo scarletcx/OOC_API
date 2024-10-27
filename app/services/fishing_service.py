@@ -287,7 +287,7 @@ def sell_fish(data):
         # 如果无法获取 gas 价格，使用一个默认值
         gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
 
-    txn = gmc_contract.functions.mint(user_id, t_price).build_transaction({
+    txn = gmc_contract.functions.mint(user_id, int(t_price * (10 ** 18))).build_transaction({
         'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
         'gas': 2000000,  # 交易的最大 gas 限制
         'gasPrice': gas_price,  # 使用计算得到的 gas 价格
