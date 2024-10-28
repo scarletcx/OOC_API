@@ -6,7 +6,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from app import create_app, db
-from app.models import User, LevelExperience, FishingRodConfig, FishingGroundConfig, SystemConfig, RarityDetermination, Fish
+from app.models import User, LevelExperience, FishingRodConfig, FishingGroundConfig, SystemConfig, RarityDetermination, Fish, PondConfig
 from config import Config
 
 # 删除这行
@@ -350,6 +350,43 @@ def init_db():
                 #for user in test_users:
                  #   logger.info(f"测试用户 ID: {user.user_id}")
            
+            # 初始化鱼池配置表
+            if PondConfig.query.count() == 0:
+                pond_configs = [
+                    PondConfig(pond_level=1, upgrade_cost=10, fishs_max=5, interest=0.0100),
+                    PondConfig(pond_level=2, upgrade_cost=30, fishs_max=10, interest=0.0120),
+                    PondConfig(pond_level=3, upgrade_cost=50, fishs_max=15, interest=0.0140),
+                    PondConfig(pond_level=4, upgrade_cost=70, fishs_max=20, interest=0.0160),
+                    PondConfig(pond_level=5, upgrade_cost=90, fishs_max=25, interest=0.0180),
+                    PondConfig(pond_level=6, upgrade_cost=110, fishs_max=30, interest=0.0200),
+                    PondConfig(pond_level=7, upgrade_cost=130, fishs_max=35, interest=0.0220),
+                    PondConfig(pond_level=8, upgrade_cost=150, fishs_max=40, interest=0.0240),
+                    PondConfig(pond_level=9, upgrade_cost=170, fishs_max=45, interest=0.0260),
+                    PondConfig(pond_level=10, upgrade_cost=190, fishs_max=50, interest=0.0280),
+                    PondConfig(pond_level=11, upgrade_cost=210, fishs_max=55, interest=0.0300),
+                    PondConfig(pond_level=12, upgrade_cost=230, fishs_max=60, interest=0.0320),
+                    PondConfig(pond_level=13, upgrade_cost=250, fishs_max=65, interest=0.0340),
+                    PondConfig(pond_level=14, upgrade_cost=270, fishs_max=70, interest=0.0360),
+                    PondConfig(pond_level=15, upgrade_cost=290, fishs_max=75, interest=0.0380),
+                    PondConfig(pond_level=16, upgrade_cost=310, fishs_max=80, interest=0.0400),
+                    PondConfig(pond_level=17, upgrade_cost=330, fishs_max=85, interest=0.0420),
+                    PondConfig(pond_level=18, upgrade_cost=350, fishs_max=90, interest=0.0440),
+                    PondConfig(pond_level=19, upgrade_cost=370, fishs_max=95, interest=0.0460),
+                    PondConfig(pond_level=20, upgrade_cost=390, fishs_max=100, interest=0.0480),
+                    PondConfig(pond_level=21, upgrade_cost=410, fishs_max=105, interest=0.0500),
+                    PondConfig(pond_level=22, upgrade_cost=430, fishs_max=110, interest=0.0520),
+                    PondConfig(pond_level=23, upgrade_cost=450, fishs_max=115, interest=0.0540),
+                    PondConfig(pond_level=24, upgrade_cost=470, fishs_max=120, interest=0.0560),
+                    PondConfig(pond_level=25, upgrade_cost=490, fishs_max=125, interest=0.0580),
+                    PondConfig(pond_level=26, upgrade_cost=510, fishs_max=130, interest=0.0600),
+                    PondConfig(pond_level=27, upgrade_cost=530, fishs_max=135, interest=0.0620),
+                    PondConfig(pond_level=28, upgrade_cost=550, fishs_max=140, interest=0.0640),
+                    PondConfig(pond_level=29, upgrade_cost=570, fishs_max=145, interest=0.0660),
+                    PondConfig(pond_level=30, upgrade_cost=590, fishs_max=150, interest=0.0680),
+                ]
+                db.session.add_all(pond_configs)
+                logger.info("鱼池配置表已初始化")
+
             db.session.commit()
             logger.info("数据库初始化完成")
         except Exception as e:
@@ -360,3 +397,4 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
+

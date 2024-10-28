@@ -7,6 +7,7 @@ class User(db.Model):
 
     user_id = db.Column(db.CHAR(42), primary_key=True)
     user_level = db.Column(db.Integer, nullable=False, default=1)
+    pond_level = db.Column(db.Integer, nullable=False, default=1)   
     user_exp = db.Column(db.Integer, nullable=False, default=0)
     user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  
     user_baits = db.Column(db.Integer, nullable=False, default=30)
@@ -142,6 +143,16 @@ class RarityDetermination(db.Model):
     qte_max = db.Column(db.Integer, nullable=False)
     possible_rarity_ids = db.Column(db.ARRAY(db.Integer), nullable=False)
     appearance_probabilities = db.Column(db.ARRAY(db.Numeric(5, 4)), nullable=False)  # 修改为Numeric
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+
+class PondConfig(db.Model):
+    __tablename__ = 'pond_configs'
+
+    pond_level = db.Column(db.Integer, primary_key=True)
+    upgrade_cost = db.Column(db.Numeric(20, 8), nullable=False)  # GMC cost with 8 decimal places
+    fishs_max = db.Column(db.Integer, nullable=False)
+    interest = db.Column(db.Numeric(5, 4), nullable=False)  # Interest rate with 4 decimal places
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 

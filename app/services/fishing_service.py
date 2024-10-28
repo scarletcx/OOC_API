@@ -337,7 +337,8 @@ def put_fish_pool(data):
     )
     db.session.add(fishing_record)  
     db.session.commit()
-    
+    #将缓存数据恢复默认值（只用修改t_fish_id）
+    t_fish_id = None
     return jsonify({
         'status': 1,
         'message': 'success'
