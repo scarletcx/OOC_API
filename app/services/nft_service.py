@@ -44,7 +44,7 @@ def handle_free_mint(data):
     try:
         if mint_type == 'avatar':
             # 获得监听铸造钓手得到的参数
-            tokenId, skinId = mint_avatar(user_id, tx_hash)
+            tokenId, skinId = mint_avatar(tx_hash)
             #free_mint_record.avatar_minted = True
             if skinId[0]+skinId[1] == '02':
                 event_data = {'tokenId': tokenId, 'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{skinId}.png"}
@@ -61,7 +61,7 @@ def handle_free_mint(data):
                 user.current_avatar_nft = user.owned_avatar_nfts[-1]
         else:
             # 获得监听鱼竿铸造得到的参数
-            tokenId, rodId = mint_rod(user_id, tx_hash)
+            tokenId, rodId = mint_rod(tx_hash)
             #free_mint_record.rod_minted = True
             event_data = {'tokenId': tokenId, 'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"}
             
@@ -129,7 +129,7 @@ def handle_free_mint(data):
         db.session.rollback()
         return jsonify({'status': 0, 'message': f'Minting failed: {str(e)}'}), 500
 
-def mint_avatar(wallet_address, tx_hash):
+def mint_avatar(tx_hash):
     """
     在以太坊测试网上铸造钓手NFT并监听FishermanMinted事件
     
@@ -158,13 +158,13 @@ def mint_avatar(wallet_address, tx_hash):
     fisherman_minted_event = avatar_contract.events.FishermanMinted().process_receipt(tx_receipt)
     if fisherman_minted_event:
         tokenId = fisherman_minted_event[0]['args']['tokenId']
-        skinId = fisherman_minted_event[0]['args']['skinId']
+        skinId = fisherman_minted_event[0]['args']['fishermanType']
     else:
         tokenId = None
         skinId = None
     return tokenId, skinId
 
-def mint_rod(wallet_address, tx_hash):
+def mint_rod(tx_hash):
     w3 = ethereum_service.get_w3()
     rod_contract = ethereum_service.get_rod_contract()
     
@@ -183,7 +183,7 @@ def mint_rod(wallet_address, tx_hash):
     rod_minted_event = rod_contract.events.RodMinted().process_receipt(tx_receipt)
     if rod_minted_event:
         tokenId = rod_minted_event[0]['args']['tokenId']
-        rodId = rod_minted_event[0]['args']['rodTypefishermanType']
+        rodId = rod_minted_event[0]['args']['rodType']
     else:
         tokenId = None
         rodId = None
