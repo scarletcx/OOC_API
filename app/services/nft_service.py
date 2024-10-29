@@ -40,15 +40,7 @@ def handle_free_mint(data):
     if mint_type not in ['avatar', 'rod']:
         # 如果铸造类型无效，返回错误响应
         return jsonify({'status': 0, 'message': 'Invalid mint type'}), 400
-    '''
-    # 检查是否已经铸造过该类型的NFT
-    if mint_type == 'avatar' and free_mint_record.avatar_minted:
-        return jsonify({'status': 0, 'message': 'Avatar NFT already minted'}), 400
-    
-    if mint_type == 'rod' and free_mint_record.rod_minted:
-        return jsonify({'status': 0, 'message': 'Rod NFT already minted'}), 400
-    '''
-    # 执行铸造操作
+    # 执行铸造监听
     try:
         if mint_type == 'avatar':
             # 获得监听铸造钓手得到的参数
@@ -191,7 +183,7 @@ def mint_rod(wallet_address, tx_hash):
     rod_minted_event = rod_contract.events.RodMinted().process_receipt(tx_receipt)
     if rod_minted_event:
         tokenId = rod_minted_event[0]['args']['tokenId']
-        rodId = rod_minted_event[0]['args']['rodType']
+        rodId = rod_minted_event[0]['args']['rodTypefishermanType']
     else:
         tokenId = None
         rodId = None
