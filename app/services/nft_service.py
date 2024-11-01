@@ -58,7 +58,7 @@ def handle_free_mint(data):
             #增加初始免费钓手
             user.owned_avatar_nfts.append({
                 "tokenId": "666666",
-                "skinId": "https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/010101050408080108.png"
+                "skinId": "010101050408080108"
             })
             db.session.commit()
         else:
@@ -78,7 +78,7 @@ def handle_free_mint(data):
         owned_avatar_nfts = [
             {
                 'tokenId': nft['tokenId'],
-                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{nft['skinId']}.png" if nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{nft['skinId']}.png"
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/{nft['skinId']}.png" if nft['skinId'].startswith('01') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{nft['skinId']}.png" if nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{nft['skinId']}.png"
             }
             for nft in user.owned_avatar_nfts
         ]
