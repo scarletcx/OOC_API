@@ -11,7 +11,7 @@ import time
 # 加载环境变量
 load_dotenv(override=True)
 
-#2.2 免费mint监听接口函数
+#2.2 mint监听接口函数
 def handle_free_mint(data):
     user_id = data.get('user_id')
     mint_type = data.get('type')
@@ -55,10 +55,12 @@ def handle_free_mint(data):
             avatar_contract = ethereum_service.get_avatar_contract()
             owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
             user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
+            #增加初始免费钓手
+            user.owned_avatar_nfts.append({
+                "tokenId": "666666",
+                "skinId": "https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/010101050408080108.png"
+            })
             db.session.commit()
-            # 如果current_avatar_nft为空，设置为最新铸造的NFT
-            if user.current_avatar_nft is None:
-                user.current_avatar_nft = user.owned_avatar_nfts[-1]
         else:
             # 获得监听鱼竿铸造得到的参数
             tokenId, rodId = mint_rod(tx_hash)
@@ -70,27 +72,13 @@ def handle_free_mint(data):
             owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
             user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
             db.session.commit()
-            # 如果current_rod_nft为空，设置为最新铸造的NFT
-            if user.current_rod_nft is None:
-                user.current_rod_nft = user.owned_rod_nfts[-1]
     
         db.session.commit()
-        
-        current_avatar_nft = user.current_avatar_nft
-        if current_avatar_nft and 'tokenId' in current_avatar_nft:
-            tokenId = current_avatar_nft['tokenId']
-            current_avatar_nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
-        
-        current_rod_nft = user.current_rod_nft
-        if current_rod_nft and 'rodId' in current_rod_nft:
-            rodId = current_rod_nft['rodId']
-            current_rod_nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
-            del current_rod_nft['rodId']
          
         owned_avatar_nfts = [
             {
                 'tokenId': nft['tokenId'],
-                'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{nft['skinId']}.png" if nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{nft['skinId']}.png"
             }
             for nft in user.owned_avatar_nfts
         ]
@@ -113,17 +101,9 @@ def handle_free_mint(data):
                 'event_data': event_data,
                 'owned_avatar_nfts': owned_avatar_nfts,
                 'owned_rod_nfts': owned_rod_nfts,
-                'current_avatar_nft': current_avatar_nft,
-                'current_rod_nft': current_rod_nft
             }
         }
-        '''
-        # 根据mint_type添加相应的URL
-        if mint_type == 'avatar':
-            response_data['data']['avatarPicUrl'] = avatarPicUrl
-        else:
-            response_data['data']['rodPicUrl'] = rodPicUrl
-        '''
+        
         return jsonify(response_data)
     except Exception as e:
         db.session.rollback()
