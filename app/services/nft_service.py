@@ -63,14 +63,14 @@ def handle_free_mint(data):
             db.session.commit()
         else:
             # 获得监听鱼竿铸造得到的参数
-            tokenId, rodId = mint_rod(tx_hash)
+            tokenId, skinIdId = mint_rod(tx_hash)
             #free_mint_record.rod_minted = True
-            event_data = {'tokenId': tokenId, 'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"}
+            event_data = {'tokenId': tokenId, 'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{skinId}.png"}
             
             # 更新用户的owned_rod_nfts
             rod_contract = ethereum_service.get_rod_contract()
             owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
-            user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+            user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
             db.session.commit()
     
         db.session.commit()
@@ -86,7 +86,7 @@ def handle_free_mint(data):
         owned_rod_nfts = [
             {
                 'tokenId': nft['tokenId'],
-                'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['skinId']}.png"
             }
             for nft in user.owned_rod_nfts
         ]
@@ -163,12 +163,12 @@ def mint_rod(tx_hash):
     rod_minted_event = rod_contract.events.RodMinted().process_receipt(tx_receipt)
     if rod_minted_event:
         tokenId = rod_minted_event[0]['args']['tokenId']
-        rodId = rod_minted_event[0]['args']['rodType']
+        skinId = rod_minted_event[0]['args']['rodType']
     else:
         tokenId = None
-        rodId = None
+        skinId = None
 
-    return tokenId, rodId
+    return tokenId, skinId
 
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
 def change_nft_status(data):
