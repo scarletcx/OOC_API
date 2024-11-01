@@ -12,7 +12,7 @@ import time
 load_dotenv(override=True)
 
 #2.2 mint监听接口函数
-def handle_free_mint(data):
+def handle_mint_event(data):
     user_id = data.get('user_id')
     mint_type = data.get('type')
     tx_hash = data.get('tx_hash')
@@ -170,6 +170,94 @@ def mint_rod(tx_hash):
 
     return tokenId, skinId
 
+#2.3 免费mint鱼竿接口
+def free_mint_rod(data):
+    user_id = data.get('user_id')
+    try:
+        user_id = user_id.strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400 
+    # 查询用户
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404 
+    # 获取或创建用户的免费铸造记录
+    free_mint_record = FreeMintRecord.query.get(user_id)
+    if not free_mint_record:
+        # 如果记录不存在，创建新记录
+        free_mint_record = FreeMintRecord(user_id=user_id, rod_minted=False)
+        db.session.add(free_mint_record)
+    ##向合约发起购买鱼饵操作并等待交易完成
+    # 获取Web3实例以连接以太坊网络
+    w3 = ethereum_service.get_w3()
+    rod_contract = ethereum_service.get_rod_contract()
+    minter_address = os.getenv('MINTER_ADDRESS')
+    
+    if not minter_address:
+        raise ValueError("MINTER_ADDRESS environment variable is not set")
+    
+    # 确保地址是校验和格式
+    checksum_address = w3.to_checksum_address(minter_address)
+    nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
+    
+    # 获取当前的 gas 价格
+    try:
+        gas_price = w3.eth.gas_price
+        # 如果需要，可以稍微提高 gas 价格
+        #gas_price = int(gas_price * 1.1)  # 提高 10%
+    except Exception as e:
+        print(f"无法获取 gas 价格: {e}")
+        # 如果无法获取 gas 价格，使用一个默认值
+        gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
+
+    txn = rod_contract.functions.freeMintRod(user_id).build_transaction({
+        'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
+        'gas': 2000000,  # 交易的最大 gas 限制
+        'gasPrice': gas_price,  # 使用计算得到的 gas 价格
+        'nonce': nonce,  # 发送者账户的交易计数
+    })
+
+    # 签名交易
+    signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+    # 发送交易
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    
+    # 增加等待时间并添加重试逻辑
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+            break
+        except TimeExhausted:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(10)  # 等待10秒后重试
+    # 获得监听免费mint鱼竿得到的参数
+    tokenId, skinId = mint_rod(tx_hash)
+    free_mint_record.rod_minted = True
+    event_data = {'tokenId': tokenId, 'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{skinId}.png"}
+            
+    # 更新用户的owned_rod_nfts和current_rod_nft
+    owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
+    # 如果current_rod_nft为空，设置为最新铸造的NFT
+    if user.current_rod_nft is None and user.owned_rod_nfts:
+        user.current_rod_nft = user.owned_rod_nfts[-1]
+    db.session.commit()
+    owned_rod_nfts = [
+            {
+                'tokenId': nft['tokenId'],
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['skinId']}.png"
+            }
+            for nft in user.owned_rod_nfts
+        ]
+    # 返回成功响应
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': event_data,
+        'owned_rod_nfts': owned_rod_nfts
+    })
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
 def change_nft_status(data):
     user_id = data.get('user_id')

@@ -3,7 +3,7 @@ from flask import jsonify, request
 from app.services import nft_service
 
 #2.2 mint监听接口
-@bp.route('/app/v1/mint/free', methods=['POST'])
+@bp.route('/app/v1/mint/event', methods=['POST'])
 def free_mint():
     """
     mint监听接口
@@ -20,7 +20,13 @@ def free_mint():
     - 监听结果
     """
     data = request.json
-    return nft_service.handle_free_mint(data)
+    return nft_service.handle_mint_event(data)
+
+#2.3 免费mint鱼竿接口
+@bp.route('/app/v1/free_mint/rod', methods=['POST'])
+def mint_rod():
+    data = request.json
+    return nft_service.free_mint_rod(data)
 
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口
 @bp.route('/app/v1/nft/change/status', methods=['POST'])
