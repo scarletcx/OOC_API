@@ -251,13 +251,20 @@ def free_mint_rod(data):
             }
             for nft in user.owned_rod_nfts
         ]
+    current_rod_nft = user.current_rod_nft
+    if current_rod_nft and 'skinId' in current_rod_nft:
+        current_rod_nft['skinId'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{current_rod_nft['skinId']}.png"
     # 返回成功响应
-    return jsonify({
-        'status': 1,
-        'message': 'success',
-        'data': event_data,
-        'owned_rod_nfts': owned_rod_nfts
-    })
+    response_data = {
+            'status': 1,
+            'message': 'success',
+            'data': {
+                'rod_minted': int(free_mint_record.rod_minted),
+                'event_data': event_data,
+                'owned_rod_nfts': owned_rod_nfts,
+                'current_rod_nft': current_rod_nft['skinId']
+            }
+        }
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
 def change_nft_status(data):
     user_id = data.get('user_id')
