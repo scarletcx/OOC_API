@@ -63,7 +63,7 @@ def handle_free_mint(data):
             db.session.commit()
         else:
             # 获得监听鱼竿铸造得到的参数
-            tokenId, skinIdId = mint_rod(tx_hash)
+            tokenId, skinId = mint_rod(tx_hash)
             #free_mint_record.rod_minted = True
             event_data = {'tokenId': tokenId, 'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{skinId}.png"}
             
