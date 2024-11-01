@@ -148,7 +148,7 @@ def get_fishing_preparation(user_id):
     db.session.commit()
     
     # 获取当前鱼竿的信息
-    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1) if user.current_rod_nft else None
+    current_rod = FishingRodConfig.query.get(user.current_rod_nft['skinId']+1) if user.current_rod_nft else None
 
     # 获取可进入的渔场信息
     accessible_grounds = FishingGroundConfig.query.filter(FishingGroundConfig.enter_lv <= user.user_level).all()
