@@ -187,6 +187,9 @@ def free_mint_rod(data):
         # 如果记录不存在，创建新记录
         free_mint_record = FreeMintRecord(user_id=user_id, rod_minted=False)
         db.session.add(free_mint_record)
+    # 检查用户是否已经免费铸造过鱼竿
+    if free_mint_record.rod_minted:
+        return jsonify({'status': 0, 'message': 'User has already minted a rod'}), 400  
     ##向合约发起购买鱼饵操作并等待交易完成
     # 获取Web3实例以连接以太坊网络
     w3 = ethereum_service.get_w3()
