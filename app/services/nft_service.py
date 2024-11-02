@@ -268,6 +268,8 @@ def free_mint_rod(data):
                 'current_rod_nft': current_rod_nft
             }
         }
+    return jsonify(response_data)
+
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数
 def change_nft_status(data):
     user_id = data.get('user_id')
