@@ -120,7 +120,7 @@ def get_fishing_preparation(user_id):
     # 更新用户的owned_avatar_nfts
     avatar_contract = ethereum_service.get_avatar_contract()
     owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
-    user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
+    user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId":  nft[1]} for nft in owned_nfts]
     ##增加初始免费钓手
     user.owned_avatar_nfts.append({
         "tokenId": "666666",
@@ -373,7 +373,12 @@ def init_fishing_session(user_id):
     # 更新用户的owned_avatar_nfts
     avatar_contract = ethereum_service.get_avatar_contract()
     owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
-    user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+    user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId":  nft[1]} for nft in owned_nfts]
+    ##增加初始免费钓手
+    user.owned_avatar_nfts.append({
+        "tokenId": "666666",
+        "skinId": "010101050408080108"
+    })
     db.session.commit()        
     # 如果current_avatar_nft为空，或者current_avatar_nft不存在于owned_avatar_nfts里，直接返回报错信息：当前avatar不存在，请更换有效的avatar（换成英文版的提示）
     if user.current_avatar_nft is None or user.current_avatar_nft not in user.owned_avatar_nfts:
