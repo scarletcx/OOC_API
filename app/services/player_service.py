@@ -375,22 +375,18 @@ def init_fishing_session(user_id):
     owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
     user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
     db.session.commit()        
-    # 如果current_avatar_nft为空，设置为最新铸造的NFT
-    if user.current_avatar_nft is None and user.owned_avatar_nfts:
-        user.current_avatar_nft = user.owned_avatar_nfts[-1]
+    # 如果current_avatar_nft为空，或者current_avatar_nft不存在于owned_avatar_nfts里，直接返回报错信息：当前avatar不存在，请更换有效的avatar（换成英文版的提示）
+    if user.current_avatar_nft is None or user.current_avatar_nft not in user.owned_avatar_nfts:
+        return jsonify({'status': 0, 'message': 'Current avatar does not exist, please change to a valid avatar'}), 400
     
     # 更新用户的owned_rod_nfts
     rod_contract = ethereum_service.get_rod_contract()
     owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
-    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
     db.session.commit()        
-    # 如果current_rod_nft为空，设置为最新铸造的NFT
-    if user.current_rod_nft is None and user.owned_rod_nfts:
-        user.current_rod_nft = user.owned_rod_nfts[-1]
-    db.session.commit()
-    
-    if not user.current_avatar_nft or not user.current_rod_nft:
-        return jsonify({'status': 0, 'message': 'Player missing necessary NFTs'}), 400
+    # 如果current_rod_nft为空，或者current_rod_nft不存在于owned_rod_nfts里，直接返回报错信息：当前rod不存在，请更换有效的rod（换成英文版的提示）
+    if user.current_rod_nft is None or user.current_rod_nft not in user.owned_rod_nfts:
+        return jsonify({'status': 0, 'message': 'Current rod does not exist, please change to a valid rod'}), 400
 
     # 2. 检查玩家当前钓鱼次数
     if user.fishing_count <= 0:
@@ -426,7 +422,7 @@ def init_fishing_session(user_id):
                 user.next_recovery_time = current_time + fishing_recovery_interval
                 
             #qte初始化
-            current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1)
+            current_rod = FishingRodConfig.query.get(user.current_rod_nft['skinId']+1)
             user.remaining_qte_count = current_rod.qte_count
             user.accumulated_qte_score = 0
             user.qte_hit_status_green = False
