@@ -265,7 +265,7 @@ def free_mint_rod(data):
                 'rod_minted': int(free_mint_record.rod_minted),
                 'event_data': event_data,
                 'owned_rod_nfts': owned_rod_nfts,
-                'current_rod_nft': current_rod_nft['skinId']
+                'current_rod_nft': current_rod_nft
             }
         }
 #3.10 更换钓手NFT和鱼竿NFT界面状态接口函数

@@ -190,7 +190,7 @@ def get_fishing_preparation(user_id):
     #更新GMC
     #从合约更新user_gmc
     gmc_contract = ethereum_service.get_gmc_contract()
-    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call()   # .call() 用于在本地执行合约函数，不会发起链上交易
+    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
     #从合约更新鱼饵数量
     user_contract = ethereum_service.get_user_contract()
     user.user_baits = user_contract.functions.getBaitCount(user_id).call()
