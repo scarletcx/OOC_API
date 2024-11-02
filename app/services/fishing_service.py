@@ -135,7 +135,7 @@ def process_qte(user, qte_colour):
     if qte_colour not in ['red', 'green', 'black']:
         return jsonify({'status': 0, 'message': 'Invalid QTE colour'}), 400
 
-    current_rod = FishingRodConfig.query.get(user.current_rod_nft['rodId']+1)
+    current_rod = FishingRodConfig.query.get(user.current_rod_nft['skinId']+1)
     
     if user.remaining_qte_count == current_rod.qte_count:
         user.accumulated_qte_score += current_rod.qte_progress_change
