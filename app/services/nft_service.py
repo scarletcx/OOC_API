@@ -284,48 +284,55 @@ def change_nft_status(data):
     # 更新用户的owned_avatar_nfts
     avatar_contract = ethereum_service.get_avatar_contract()
     owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
-    user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
-    db.session.commit()        
+    user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
+    #增加初始免费钓手
+    user.owned_avatar_nfts.append({
+        "tokenId": "666666",
+        "skinId": "010101050408080108"
+    })
+    db.session.commit()
+    # avatar_contract = ethereum_service.get_avatar_contract()
+    # owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+    # user.owned_avatar_nfts = [{"tokenId": str(nft)} for nft in owned_nfts]
+    # db.session.commit()        
     # 如果current_avatar_nft为空，设置为最新铸造的NFT
-    if user.current_avatar_nft is None and user.owned_avatar_nfts:
-        user.current_avatar_nft = user.owned_avatar_nfts[-1]
+    # if user.current_avatar_nft is None and user.owned_avatar_nfts:
+    #     user.current_avatar_nft = user.owned_avatar_nfts[-1]
     
     # 更新用户的owned_rod_nfts
     rod_contract = ethereum_service.get_rod_contract()
     owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
     user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
     db.session.commit()        
-    # 如果current_rod_nft为空，设置为最新铸造的NFT
-    if user.current_rod_nft is None and user.owned_rod_nfts:
-        user.current_rod_nft = user.owned_rod_nfts[-1]
-    db.session.commit()
+    # # 如果current_rod_nft为空，设置为最新铸造的NFT
+    # if user.current_rod_nft is None and user.owned_rod_nfts:
+    #     user.current_rod_nft = user.owned_rod_nfts[-1]
+    # db.session.commit()
     
     current_avatar_nft = user.current_avatar_nft
-    if current_avatar_nft and 'tokenId' in current_avatar_nft:
-        tokenId = current_avatar_nft['tokenId']
-        current_avatar_nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{tokenId}.png"
+    if current_avatar_nft and 'skinId' in current_avatar_nft:
+        current_avatar_nft['skinId'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/{current_avatar_nft['skinId']}.png" if current_avatar_nft['skinId'].startswith('01') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{current_avatar_nft['skinId']}.png" if current_avatar_nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{current_avatar_nft['skinId']}.png"
         
     current_rod_nft = user.current_rod_nft
-    if current_rod_nft and 'rodId' in current_rod_nft:
-        rodId = current_rod_nft['rodId']
-        current_rod_nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{rodId}.png"
-        del current_rod_nft['rodId']
-         
+    if current_rod_nft and 'skinId' in current_rod_nft:
+        skinId = current_rod_nft['skinId']
+        current_rod_nft['skinId'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{skinId}.png"
+    
     owned_avatar_nfts = [
-        {
-            'tokenId': nft['tokenId'],
-            'avatarPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
-        }
-        for nft in user.owned_avatar_nfts
-    ]
+            {
+                'tokenId': nft['tokenId'],
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/{nft['skinId']}.png" if nft['skinId'].startswith('01') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{nft['skinId']}.png" if nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{nft['skinId']}.png"
+            }
+            for nft in user.owned_avatar_nfts
+        ]
         
     owned_rod_nfts = [
-        {
-            'tokenId': nft['tokenId'],
-            'rodPicUrl': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
-        }
-        for nft in user.owned_rod_nfts
-    ]
+            {
+                'tokenId': nft['tokenId'],
+                'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['skinId']}.png"
+            }
+            for nft in user.owned_rod_nfts
+        ]
     
     # 返回成功响应
     return jsonify({
@@ -387,10 +394,9 @@ def change_nft(data):
     db.session.commit()
     
     if nft_type == 'avatar':
-        nft['avatarPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmaKvVRb8k1FQYbPZ38RfU2LJVCawwyd2Znf6ZSPkaDcJa/{nft['tokenId']}.png"
+        nft['skinId'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmezqXViXKGVJizodoVT88xJv7vw3kYVyj7hJnRC3cZ9K8/{nft['skinId']}.png" if nft['skinId'].startswith('01') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmVwfRBC7Pi2TMdWL1PDt7S5yPcL2uerTu5A5WYWretgrD/{nft['skinId']}.png" if nft['skinId'].startswith('02') else f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmUVWsU9gmfBjnzhxpXXLTEp9P7fgykCmydbetsACxuTgJ/{nft['skinId']}.png"
     else:
-        nft['rodPicUrl'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['rodId']}.png"
-        del nft['rodId']
+        nft['skinId'] = f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{nft['skinId']}.png"
 
     # 返回成功响应
     return jsonify({
