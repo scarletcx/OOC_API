@@ -446,7 +446,7 @@ def init_fishing_session(user_id):
                 'next_recovery_time': user.next_recovery_time,
                 'user_baits': user.user_baits,
                 'session_id': str(session.session_id),
-                'qte_count ': user.remaining_qte_count,
+                'qte_count': user.remaining_qte_count,
                 'accumulated_qte_score': user.accumulated_qte_score
             }
         })

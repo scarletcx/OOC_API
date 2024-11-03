@@ -293,7 +293,7 @@ def change_nft_status(data):
     # 更新用户的owned_rod_nfts
     rod_contract = ethereum_service.get_rod_contract()
     owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
-    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "rodId": nft[1]} for nft in owned_nfts]
+    user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
     db.session.commit()        
     # 如果current_rod_nft为空，设置为最新铸造的NFT
     if user.current_rod_nft is None and user.owned_rod_nfts:
