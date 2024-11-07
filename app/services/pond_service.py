@@ -152,17 +152,17 @@ def update_bubble(data):
 
     for record in fishing_records:
         if record.rarity_id == 1:
-            bubble_gmc["gmc_star1"] = record.output_stock
+            bubble_gmc["gmc_star1"] = float(record.output_stock)
         elif record.rarity_id == 2:
-            bubble_gmc["gmc_star2"] = record.output_stock
+            bubble_gmc["gmc_star2"] = float(record.output_stock)
         elif record.rarity_id == 3:
-            bubble_gmc["gmc_star3"] = record.output_stock
+            bubble_gmc["gmc_star3"] = float(record.output_stock)
         elif record.rarity_id == 4:
-            bubble_gmc["gmc_star4"] = record.output_stock
+            bubble_gmc["gmc_star4"] = float(record.output_stock)
         elif record.rarity_id == 5:
-            bubble_gmc["gmc_star5"] = record.output_stock
+            bubble_gmc["gmc_star5"] = float(record.output_stock)
         elif record.rarity_id == 6:
-            bubble_gmc["gmc_star6"] = record.output_stock
+            bubble_gmc["gmc_star6"] = float(record.output_stock)
 
     # 更新用户的bubble_gmc
     user.bubble_gmc = bubble_gmc
