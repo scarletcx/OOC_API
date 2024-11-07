@@ -1,13 +1,14 @@
 # 此文件包含钓鱼游戏中与玩家相关操作的服务函数。
 # 它实现了玩家行为和数据检索的业务逻辑。
 
-from app.models import User, LevelExperience, FishingGroundConfig, FishingRodConfig, FishingSession, SystemConfig, FreeMintRecord
+from app.models import User, LevelExperience, FishingGroundConfig, FishingRodConfig, FishingSession, SystemConfig, FreeMintRecord, Bubble, FishingRecord, PondConfig
 from app import db
 from flask import jsonify
 from sqlalchemy import func
 from app.services import ethereum_service
 import time
 import os
+import json
 from web3.exceptions import TimeExhausted
 #2.1 用户注册接口函数
 def register_player(data):
@@ -83,6 +84,13 @@ def register_player(data):
     user.user_gmc = initial_gmc_config.config_value
     user.user_baits = initial_bait_count_config.config_value
     user.fishing_count = initial_fishing_count_config.config_value
+    user.bubble_gmc = json.dumps({"1": 0,
+                                  "2": 0,
+                                  "3": 0,
+                                  "4": 0,
+                                  "5": 0,
+                                  "6": 0
+                                 })
     
     db.session.add(user)
     db.session.commit()
@@ -221,15 +229,33 @@ def get_fishing_preparation(user_id):
             for nft in user.owned_rod_nfts
         ]
     
+    # 获取bubble_gmc_max的值
+    bubbles = Bubble.query.filter(Bubble.id.between(1, 6)).all()
+    bubble_gmc_max = {f"gmc_max{bubble.id}": bubble.gmc_max for bubble in bubbles}
+    
+    # 获取用户鱼的数量
+    user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+    
+    # 获取当前等级的鱼池配置
+    current_pond = PondConfig.query.get(user.pond_level)
+    if not current_pond:
+        return jsonify({'status': 0, 'message': 'Current pond level config not found'}), 404
+    
     return jsonify({
         'status': 1,
         'message': 'success',
         'data': {
             'user_id': str(user.user_id),
             'user_level': user.user_level,
+            'pound_level':user.pond_level,
+            'user_fishers_count': user_fishers_count,
+            'fishs_max': current_pond.fishs_max,
             'user_exp': user.user_exp,
             'max_exp': level_exp.max_exp,
             'user_gmc': float(user.user_gmc),
+            'collected_gmc': float(user.collected_gmc),
+            'bubble_gmc': user.bubble_gmc,
+            'bubble_gmc_max': bubble_gmc_max,
             'user_baits': user.user_baits,
             'current_avatar_nft': current_avatar_nft,
             'current_rod_nft': current_rod_nft,

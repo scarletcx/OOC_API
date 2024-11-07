@@ -165,7 +165,7 @@ def get_fish_info(data):
 
     fish = Fish.query.filter_by(
         rarity_id=rarity_id,
-        fishing_ground_id=user.current_fishing_ground
+        #fishing_ground_id=user.current_fishing_ground
     ).order_by(func.random()).first()
 
     if not fish:
@@ -174,13 +174,13 @@ def get_fish_info(data):
     weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
     
     #将鱼的信息赋值给变量
-    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
+    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_price, t_output, t_weight
     t_fish_id = fish.fish_id
     t_fish_name = fish.fish_name
     t_fish_picture_res = fish.fish_picture_res
     t_rarity_id = fish.rarity_id
-    t_fishing_ground_id = fish.fishing_ground_id
-    t_fishing_ground_name = fish.fishing_ground_name
+    # t_fishing_ground_id = fish.fishing_ground_id
+    # t_fishing_ground_name = fish.fishing_ground_name
     t_price = fish.price
     t_output = fish.output
     t_weight = weight
@@ -193,8 +193,8 @@ def get_fish_info(data):
             'fish_name': t_fish_name,
             'fish_picture_res': t_fish_picture_res,
             'rarity_id': t_rarity_id,
-            'fishing_ground_id': t_fishing_ground_id,
-            'fishing_ground_name': t_fishing_ground_name,
+            # 'fishing_ground_id': t_fishing_ground_id,
+            # 'fishing_ground_name': t_fishing_ground_name,
             'price': str(t_price),
             'output': str(t_output),
             'weight': str(round(t_weight, 2))

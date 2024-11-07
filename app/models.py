@@ -10,6 +10,8 @@ class User(db.Model):
     pond_level = db.Column(db.Integer, nullable=False, default=1)   
     user_exp = db.Column(db.Integer, nullable=False, default=0)
     user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  
+    collected_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)
+    bubble_gmc = db.Column(JSONB, nullable=True)
     user_baits = db.Column(db.Integer, nullable=False, default=30)
     current_avatar_nft = db.Column(JSONB, nullable=True)
     current_rod_nft = db.Column(JSONB, nullable=True)
@@ -155,5 +157,11 @@ class PondConfig(db.Model):
     interest = db.Column(db.Numeric(5, 4), nullable=False)  # Interest rate with 4 decimal places
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
+    
+class Bubble(db.Model):
+    __tablename__ = 'bubbles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    gmc_max = db.Column(db.Integer, nullable=False)
 
 # Add other models as needed
