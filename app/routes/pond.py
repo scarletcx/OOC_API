@@ -8,3 +8,14 @@ def upgrade_pond_state():
     data = request.json
     return pond_service.get_upgrade_pond_state(data)
 
+#5.2 鱼池升级接口
+@bp.route('/app/v1/pond/upgrade', methods=['POST'])
+def upgrade_pond():
+    data = request.json
+    return pond_service.upgrade_pond(data)
+
+#5.3 泡泡产币更新接口
+@bp.route('/app/v1/pond/bubble/output', methods=['POST'])
+def update_bubble():
+    data = request.json
+    return pond_service.update_bubble(data)
