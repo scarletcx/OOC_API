@@ -84,13 +84,13 @@ def register_player(data):
     user.user_gmc = initial_gmc_config.config_value
     user.user_baits = initial_bait_count_config.config_value
     user.fishing_count = initial_fishing_count_config.config_value
-    user.bubble_gmc = json.dumps({"1": 0,
-                                  "2": 0,
-                                  "3": 0,
-                                  "4": 0,
-                                  "5": 0,
-                                  "6": 0
-                                 })
+    user.bubble_gmc = {"gmc_star1": 0,
+                        "gmc_star2": 0,
+                        "gmc_star3": 0,
+                        "gmc_star4": 0,
+                        "gmc_star5": 0,
+                        "gmc_star6": 0
+                      }
     
     db.session.add(user)
     db.session.commit()

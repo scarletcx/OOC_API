@@ -287,7 +287,7 @@ def put_fish_pool(data):
     user = User.query.get(user_id)
     if not user:
         return jsonify({'status': 0, 'message': 'User not found'}), 404
-    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
+    global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_price, t_output, t_weight
     #检查用户是否拥有鱼
     if not t_fish_id:
         return jsonify({'status': 0, 'message': 'No fish found'}), 400
@@ -297,8 +297,8 @@ def put_fish_pool(data):
         fish_name=t_fish_name,
         fish_picture_res=t_fish_picture_res,
         rarity_id=t_rarity_id,
-        fishing_ground_id=t_fishing_ground_id,
-        fishing_ground_name=t_fishing_ground_name,
+        # fishing_ground_id=t_fishing_ground_id,
+        # fishing_ground_name=t_fishing_ground_name,
         price=t_price,
         output=t_output,
         weight=t_weight
