@@ -1,4 +1,4 @@
-from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig, LevelExperience, FishingGroundConfig
+from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig, PondConfig
 from app import db
 from sqlalchemy import func
 import random
@@ -10,7 +10,7 @@ import os
 from web3.exceptions import Web3Exception, TimeExhausted
 import time
 from dotenv import load_dotenv
-from app.services.variables import t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_fishing_ground_id, t_fishing_ground_name, t_price, t_output, t_weight
+from app.services.variables import t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_price, t_output, t_weight
 # 加载环境变量
 load_dotenv(override=True)
 
@@ -291,6 +291,17 @@ def put_fish_pool(data):
     #检查用户是否拥有鱼
     if not t_fish_id:
         return jsonify({'status': 0, 'message': 'No fish found'}), 400
+    # 获取当前等级的鱼池配置
+    current_pond = PondConfig.query.get(user.pond_level)
+    if not current_pond:
+        return jsonify({'status': 0, 'message': 'Current pond level config not found'}), 404
+
+    # 获取用户鱼的数量
+    user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+
+    # 检查鱼池是否已满
+    if user_fishers_count >= current_pond.fishs_max:
+        return jsonify({'status': 0, 'message': 'Fish pond is full'}), 400
     fishing_record = FishingRecord(
         user_id=user_id,
         fish_id=t_fish_id,
@@ -307,7 +318,13 @@ def put_fish_pool(data):
     db.session.commit()
     #将缓存数据恢复默认值（只用修改t_fish_id）
     t_fish_id = None
+    
+    # 获取用户鱼的数量
+    user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
     return jsonify({
         'status': 1,
-        'message': 'success'
+        'message': 'success',
+        'data': {
+            "user_fishers_count": user_fishers_count
+        }
     })
