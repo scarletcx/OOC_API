@@ -378,34 +378,34 @@ def init_db():
                     User(
                         user_id="0x1945fE87f2Ed52bda68B4bC9D79Af2d9bd544597",
                         fishing_count=Config.MAX_FISHING_COUNT,
-                        bubble_gmc=json.dumps({"1": 0,
-                                               "2": 0,
-                                               "3": 0,
-                                               "4": 0,
-                                               "5": 0,
-                                               "6": 0
+                        bubble_gmc=json.dumps({"gmc_star1": 0,
+                                               "gmc_star2": 0,
+                                               "gmc_star3": 0,
+                                               "gmc_star4": 0,
+                                               "gmc_star5": 0,
+                                               "gmc_star6": 0
                                                })
                     ),
                     User(
                         user_id="0x7242010401413C20aF4d4Cd34449F6F1F0b81d32",
                         fishing_count=Config.MAX_FISHING_COUNT,
-                        bubble_gmc=json.dumps({"1": 0,
-                                               "2": 0,
-                                               "3": 0,
-                                               "4": 0,
-                                               "5": 0,
-                                               "6": 0
+                        bubble_gmc=json.dumps({"gmc_star1": 0,
+                                               "gmc_star2": 0,
+                                               "gmc_star3": 0,
+                                               "gmc_star4": 0,
+                                               "gmc_star5": 0,
+                                               "gmc_star6": 0
                                                })
                     ),
                     User(
                         user_id="0xE9d0AC3148B37d0841bf5F96bfdc49E87f7e73Ff",
                         fishing_count=Config.MAX_FISHING_COUNT,
-                        bubble_gmc=json.dumps({"1": 0,
-                                               "2": 0,
-                                               "3": 0,
-                                               "4": 0,
-                                               "5": 0,
-                                               "6": 0
+                        bubble_gmc=json.dumps({"gmc_star1": 0,
+                                               "gmc_star2": 0,
+                                               "gmc_star3": 0,
+                                               "gmc_star4": 0,
+                                               "gmc_star5": 0,
+                                               "gmc_star6": 0
                                                })
                     )
                 ]
