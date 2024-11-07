@@ -155,33 +155,33 @@ def update_bubble(data):
     
     for record in fishing_records:
         if record.rarity_id == 1:
-            if bubble_gmc["gmc_star1"] + float(record.output_stock) > bubble_limits["gmc_star1"]:
-                bubble_gmc["gmc_star1"] = bubble_limits["gmc_star1"]
+            if bubble_gmc["gmc_star1"] + float(record.output_stock) > bubble_limits["1"]:
+                bubble_gmc["gmc_star1"] = bubble_limits["1"]
             else:
                 bubble_gmc["gmc_star1"] += float(record.output_stock)
         elif record.rarity_id == 2:
-            if bubble_gmc["gmc_star2"] + float(record.output_stock) > bubble_limits["gmc_star2"]:
-                bubble_gmc["gmc_star2"] = bubble_limits["gmc_star2"]
+            if bubble_gmc["gmc_star2"] + float(record.output_stock) > bubble_limits["2"]:
+                bubble_gmc["gmc_star2"] = bubble_limits["2"]
             else:
                 bubble_gmc["gmc_star2"] += float(record.output_stock)
         elif record.rarity_id == 3:
-            if bubble_gmc["gmc_star3"] + float(record.output_stock) > bubble_limits["gmc_star3"]:   
-                bubble_gmc["gmc_star3"] = bubble_limits["gmc_star3"]
+            if bubble_gmc["gmc_star3"] + float(record.output_stock) > bubble_limits["3"]:   
+                bubble_gmc["gmc_star3"] = bubble_limits["3"]
             else:
                 bubble_gmc["gmc_star3"] += float(record.output_stock)
         elif record.rarity_id == 4:
-            if bubble_gmc["gmc_star4"] + float(record.output_stock) > bubble_limits["gmc_star4"]:
-                bubble_gmc["gmc_star4"] = bubble_limits["gmc_star4"]
+            if bubble_gmc["gmc_star4"] + float(record.output_stock) > bubble_limits["4"]:
+                bubble_gmc["gmc_star4"] = bubble_limits["4"]
             else:   
                 bubble_gmc["gmc_star4"] += float(record.output_stock)
         elif record.rarity_id == 5:
-            if bubble_gmc["gmc_star5"] + float(record.output_stock) > bubble_limits["gmc_star5"]:
-                bubble_gmc["gmc_star5"] = bubble_limits["gmc_star5"]
+            if bubble_gmc["gmc_star5"] + float(record.output_stock) > bubble_limits["5"]:
+                bubble_gmc["gmc_star5"] = bubble_limits["5"]
             else:   
                 bubble_gmc["gmc_star5"] += float(record.output_stock)
         elif record.rarity_id == 6:
-            if bubble_gmc["gmc_star6"] + float(record.output_stock) > bubble_limits["gmc_star6"]:
-                bubble_gmc["gmc_star6"] = bubble_limits["gmc_star6"]
+            if bubble_gmc["gmc_star6"] + float(record.output_stock) > bubble_limits["6"]:
+                bubble_gmc["gmc_star6"] = bubble_limits["6"]
             else:   
                 bubble_gmc["gmc_star6"] += float(record.output_stock)
 
