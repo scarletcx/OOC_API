@@ -1,4 +1,4 @@
-from app.models import User, PondConfig, FishingRecord
+from app.models import User, PondConfig, FishingRecord, Bubble
 from flask import jsonify
 from app.services import ethereum_service
 from app import db
@@ -149,20 +149,41 @@ def update_bubble(data):
         "gmc_star5": 0,
         "gmc_star6": 0
     }
-
+    
+    # 获取每种rarity_id的产币上限
+    bubble_limits = {bubble.id: bubble.gmc_max for bubble in Bubble.query.all()}
+    
     for record in fishing_records:
         if record.rarity_id == 1:
-            bubble_gmc["gmc_star1"] = float(record.output_stock)
+            if bubble_gmc["gmc_star1"] + float(record.output_stock) > bubble_limits["gmc_star1"]:
+                bubble_gmc["gmc_star1"] = bubble_limits["gmc_star1"]
+            else:
+                bubble_gmc["gmc_star1"] += float(record.output_stock)
         elif record.rarity_id == 2:
-            bubble_gmc["gmc_star2"] = float(record.output_stock)
+            if bubble_gmc["gmc_star2"] + float(record.output_stock) > bubble_limits["gmc_star2"]:
+                bubble_gmc["gmc_star2"] = bubble_limits["gmc_star2"]
+            else:
+                bubble_gmc["gmc_star2"] += float(record.output_stock)
         elif record.rarity_id == 3:
-            bubble_gmc["gmc_star3"] = float(record.output_stock)
+            if bubble_gmc["gmc_star3"] + float(record.output_stock) > bubble_limits["gmc_star3"]:   
+                bubble_gmc["gmc_star3"] = bubble_limits["gmc_star3"]
+            else:
+                bubble_gmc["gmc_star3"] += float(record.output_stock)
         elif record.rarity_id == 4:
-            bubble_gmc["gmc_star4"] = float(record.output_stock)
+            if bubble_gmc["gmc_star4"] + float(record.output_stock) > bubble_limits["gmc_star4"]:
+                bubble_gmc["gmc_star4"] = bubble_limits["gmc_star4"]
+            else:   
+                bubble_gmc["gmc_star4"] += float(record.output_stock)
         elif record.rarity_id == 5:
-            bubble_gmc["gmc_star5"] = float(record.output_stock)
+            if bubble_gmc["gmc_star5"] + float(record.output_stock) > bubble_limits["gmc_star5"]:
+                bubble_gmc["gmc_star5"] = bubble_limits["gmc_star5"]
+            else:   
+                bubble_gmc["gmc_star5"] += float(record.output_stock)
         elif record.rarity_id == 6:
-            bubble_gmc["gmc_star6"] = float(record.output_stock)
+            if bubble_gmc["gmc_star6"] + float(record.output_stock) > bubble_limits["gmc_star6"]:
+                bubble_gmc["gmc_star6"] = bubble_limits["gmc_star6"]
+            else:   
+                bubble_gmc["gmc_star6"] += float(record.output_stock)
 
     # 更新用户的bubble_gmc
     user.bubble_gmc = bubble_gmc
