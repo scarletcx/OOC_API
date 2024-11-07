@@ -92,8 +92,8 @@ class Fish(db.Model):
     fish_name = db.Column(db.Text, nullable=False)
     fish_picture_res = db.Column(db.Text, nullable=False)
     rarity_id = db.Column(db.Integer, nullable=False)
-    fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
-    fishing_ground_name = db.Column(db.Text, nullable=False)
+    #fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
+    #fishing_ground_name = db.Column(db.Text, nullable=False)
     price = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
     output = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
     min_weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
