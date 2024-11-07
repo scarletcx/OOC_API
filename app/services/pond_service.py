@@ -151,7 +151,7 @@ def update_bubble(data):
     }
     
     # 获取每种rarity_id的产币上限
-    bubble_limits = {bubble.id: bubble.gmc_max for bubble in Bubble.query.all()}
+    bubble_limits = {"{bubble.id}": bubble.gmc_max for bubble in Bubble.query.all()}
     
     for record in fishing_records:
         if record.rarity_id == 1:
