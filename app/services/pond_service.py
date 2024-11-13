@@ -131,6 +131,9 @@ def update_bubble(data):
     # 获取用户的所有钓鱼记录
     fishing_records = FishingRecord.query.filter_by(user_id=user_id).all()
     current_time = int(time.time())  # 当前时间的Unix时间戳
+
+    # 获取每种rarity_id的产币上限
+    bubble_limits = {f"{bubble.id}": bubble.gmc_max for bubble in Bubble.query.all()}
     
     #获取user.bubble_gmc
     user_bubble_gmc = user.bubble_gmc
@@ -155,8 +158,7 @@ def update_bubble(data):
         "gmc_star6": 0
     }
     
-    # 获取每种rarity_id的产币上限
-    bubble_limits = {f"{bubble.id}": bubble.gmc_max for bubble in Bubble.query.all()}
+    
     
     for record in fishing_records:
         if record.rarity_id == 1:
