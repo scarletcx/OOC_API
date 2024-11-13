@@ -117,7 +117,7 @@ class FishingRecord(db.Model):
     weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     caught_at = db.Column(db.BigInteger, nullable=False, server_default=db.func.extract('epoch', db.func.now()))
     #下次产币时间（默认值为caught_at转换为Unix时间戳并加上10800秒）
-    next_output_time = db.Column(db.BigInteger, nullable=False, server_default=db.func.extract('epoch', db.func.now()) + 60)
+    next_output_time = db.Column(db.BigInteger, nullable=True, server_default=db.func.extract('epoch', db.func.now()) + 60)
     #产币存量
     output_stock = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())

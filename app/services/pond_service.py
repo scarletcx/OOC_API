@@ -131,14 +131,19 @@ def update_bubble(data):
     # 获取用户的所有钓鱼记录
     fishing_records = FishingRecord.query.filter_by(user_id=user_id).all()
     current_time = int(time.time())  # 当前时间的Unix时间戳
+    
+    #获取user.bubble_gmc
+    user_bubble_gmc = user.bubble_gmc
 
     # 遍历每条鱼，更新产币逻辑
     for record in fishing_records:
-        while record.next_output_time <= current_time:
-            # 更新output_stock
-            record.output_stock += record.output
-            # 更新下次产币时间
-            record.next_output_time += 60  # 每3小时产币一次
+        while record.next_output_time and record.next_output_time <= current_time:
+            if user_bubble_gmc[f"gmc_star{record.rarity_id}"] == bubble_limits[f"{record.rarity_id}"]:
+                record.output_stock = 0
+                record.next_output_time = None
+            else:
+                record.output_stock += record.output
+                record.next_output_time += 60  # 每3小时产币一次
 
     # 统计不同rarity_id的鱼的output_stock之和
     bubble_gmc = {
