@@ -4,6 +4,7 @@ from app.services import ethereum_service
 from app import db
 from web3.exceptions import TimeExhausted
 import time
+from decimal import Decimal
 
 #5.1 鱼池升级界面状态接口函数
 def get_upgrade_pond_state(data):
@@ -218,7 +219,7 @@ def collect_bubble(data):
      
     star_level = data.get('star_level')
 
-    user.collected_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
+    user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
     user.bubble_gmc[f"gmc_star{star_level}"] = 0 
 
     
