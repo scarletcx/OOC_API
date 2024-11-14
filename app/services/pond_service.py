@@ -142,8 +142,11 @@ def update_bubble(data):
     for record in fishing_records:
         while record.next_output_time and record.next_output_time <= current_time:
             if int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == bubble_limits[f"{record.rarity_id}"]:
-                record.output_stock = 0
+                #record.output_stock = 0
                 record.next_output_time = None
+            elif int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == 0:
+                record.output_stock = 0
+                record.next_output_time = current_time + 60  # 每3小时产币一次
             else:
                 record.output_stock += record.output
                 record.next_output_time += 60  # 每3小时产币一次
@@ -200,4 +203,32 @@ def update_bubble(data):
         'status': 1,
         'message': 'success',
         'data': user.bubble_gmc
+    })
+
+#5.4 收集泡泡gmc接口函数
+def collect_bubble(data):
+    try:
+        user_id = data.get('user_id').strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404   
+     
+    star_level = data.get('star_level')
+
+    user.collect_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
+    user.bubble_gmc[f"gmc_star{star_level}"] = 0 
+
+    
+    db.session.commit()
+    
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'collect_gmc': user.collect_gmc,
+            'user_gmc': user.user_gmc,  
+        }
     })

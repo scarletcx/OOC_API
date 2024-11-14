@@ -19,3 +19,9 @@ def upgrade_pond():
 def update_bubble():
     data = request.json
     return pond_service.update_bubble(data)
+
+#5.4 收集泡泡gmc接口
+@bp.route('/app/v1/pond/bubble/collect', methods=['POST'])
+def collect_bubble():
+    data = request.json
+    return pond_service.collect_bubble(data)    
