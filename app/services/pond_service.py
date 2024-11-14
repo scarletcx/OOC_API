@@ -222,10 +222,10 @@ def collect_bubble(data):
 
     user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
     user.bubble_gmc[f"gmc_star{star_level}"] = 0 
-    # db.session.add(user)  # 明确告诉 ORM 该对象已被修改
+    db.session.add(user)  # 明确告诉 ORM 该对象已被修改
     db.session.commit()
     
-    # db.session.refresh(user)  # 刷新对象，确保数据从数据库中获取
+    db.session.refresh(user)  # 刷新对象，确保数据从数据库中获取
 
     
     return jsonify({
