@@ -225,6 +225,9 @@ def collect_bubble(data):
     db.session.add(user)  # 明确告诉 ORM 该对象已被修改
     db.session.commit()
     
+    db.session.refresh(user)  # 刷新对象，确保数据从数据库中获取
+
+    
     return jsonify({
         'status': 1,
         'message': 'success',
