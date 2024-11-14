@@ -221,7 +221,7 @@ def collect_bubble(data):
     star_level = data.get('star_level')
 
     user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
-    user.bubble_gmc[f"gmc_star{star_level}"] = 0 
+    user.bubble_gmc[f"gmc_star{star_level}"] = 0.0 
     db.session.add(user)  # 明确告诉 ORM 该对象已被修改
     db.session.commit()
     
