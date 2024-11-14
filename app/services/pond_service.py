@@ -141,7 +141,7 @@ def update_bubble(data):
     # 遍历每条鱼，更新产币逻辑
     for record in fishing_records:
         while record.next_output_time and record.next_output_time <= current_time:
-            if user_bubble_gmc[f"gmc_star{record.rarity_id}"] == bubble_limits[f"{record.rarity_id}"]:
+            if int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == bubble_limits[f"{record.rarity_id}"]:
                 record.output_stock = 0
                 record.next_output_time = None
             else:
