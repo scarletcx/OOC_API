@@ -222,8 +222,7 @@ def collect_bubble(data):
 
     user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
     user.bubble_gmc[f"gmc_star{star_level}"] = 0 
-
-    
+    db.session.add(user)  # 明确告诉 ORM 该对象已被修改
     db.session.commit()
     
     return jsonify({
@@ -231,6 +230,6 @@ def collect_bubble(data):
         'message': 'success',
         'data': {
             'collected_gmc': user.collected_gmc,
-            'bubble _gmc': user.bubble_gmc,  
+            'bubble_gmc': user.bubble_gmc,  
         }
     })
