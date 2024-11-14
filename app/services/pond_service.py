@@ -218,7 +218,7 @@ def collect_bubble(data):
      
     star_level = data.get('star_level')
 
-    user.collect_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
+    user.collected_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
     user.bubble_gmc[f"gmc_star{star_level}"] = 0 
 
     
@@ -228,7 +228,7 @@ def collect_bubble(data):
         'status': 1,
         'message': 'success',
         'data': {
-            'collect_gmc': user.collect_gmc,
+            'collected_gmc': user.collected_gmc,
             'user_gmc': user.user_gmc,  
         }
     })
