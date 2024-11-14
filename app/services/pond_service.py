@@ -141,9 +141,10 @@ def update_bubble(data):
 
     # 遍历每条鱼，更新产币逻辑
     for record in fishing_records:
-        if int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == 0 and record.next_output_time == None:
+        if int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == 0 :
             record.output_stock = 0
-            record.next_output_time = current_time + 60  # 每3小时产币一次  
+            if record.next_output_time == None:
+                record.next_output_time = current_time + 60  # 每3小时产币一次  
         while record.next_output_time and record.next_output_time <= current_time:
             if int(user_bubble_gmc[f"gmc_star{record.rarity_id}"]) == bubble_limits[f"{record.rarity_id}"]:
                 #record.output_stock = 0
@@ -230,6 +231,6 @@ def collect_bubble(data):
         'message': 'success',
         'data': {
             'collected_gmc': user.collected_gmc,
-            'user_gmc': user.user_gmc,  
+            'bubble _gmc': user.bubble_gmc,  
         }
     })
