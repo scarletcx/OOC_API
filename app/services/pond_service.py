@@ -41,7 +41,7 @@ def get_upgrade_pond_state(data):
         'message': 'success',
         'data': {
             'current_pond_level': user.pond_level,
-            'upgrade_cost': float(current_pond.upgrade_cost),
+            'upgrade_cost': current_pond.upgrade_cost,
             'current_fishs_max': current_pond.fishs_max,
             'current_interest': float(current_pond.interest),
             'next_fishs_max': next_pond.fishs_max,
@@ -75,7 +75,7 @@ def upgrade_pond(data):
     #执行升级操作
     # 获取Web3实例以连接以太坊网络
     w3 = ethereum_service.get_w3()
-    user_contract = ethereum_service.get_user_contract()
+    #user_contract = ethereum_service.get_user_contract()
     
     # 增加等待时间并添加重试逻辑
     max_attempts = 3
@@ -90,7 +90,7 @@ def upgrade_pond(data):
             
     #从合约更新user_gmc
     gmc_contract = ethereum_service.get_gmc_contract()
-    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
+    user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18))  # .call() 用于在本地执行合约函数，不会发起链上交易
     #更新后端鱼池等级：user.pound_level += 1
     user.pond_level += 1
     
@@ -221,7 +221,7 @@ def collect_bubble(data):
     star_level = data.get('star_level')
 
     # 先累加到collected_gmc
-    user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
+    user.collected_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
     
     # 将对应星级的bubble_gmc置0
     bubble_gmc = user.bubble_gmc

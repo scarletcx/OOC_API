@@ -9,8 +9,8 @@ class User(db.Model):
     user_level = db.Column(db.Integer, nullable=False, default=1)
     pond_level = db.Column(db.Integer, nullable=False, default=1)   
     user_exp = db.Column(db.Integer, nullable=False, default=0)
-    user_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)  
-    collected_gmc = db.Column(db.Numeric(20, 8), nullable=False, default=0)
+    user_gmc = db.Column(db.BigInteger, nullable=False, default=0)  
+    collected_gmc = db.Column(db.BigInteger, nullable=False, default=0)
     bubble_gmc = db.Column(JSONB, nullable=True)
     user_baits = db.Column(db.Integer, nullable=False, default=30)
     current_avatar_nft = db.Column(JSONB, nullable=True)
@@ -94,8 +94,8 @@ class Fish(db.Model):
     rarity_id = db.Column(db.Integer, nullable=False)
     #fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
     #fishing_ground_name = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
-    output = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    price = db.Column(db.BigInteger, nullable=False, default=0)  # 修改为Numeric
+    output = db.Column(db.BigInteger, nullable=False, default=0)  # 修改为Numeric
     min_weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     max_weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
@@ -112,14 +112,14 @@ class FishingRecord(db.Model):
     rarity_id = db.Column(db.Integer, nullable=False)
     # fishing_ground_id = db.Column(db.Integer, db.ForeignKey('fishing_ground_configs.id'), nullable=False)
     # fishing_ground_name = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
-    output = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    price = db.Column(db.BigInteger, nullable=False, default=0)  # 修改为Numeric
+    output = db.Column(db.BigInteger, nullable=False, default=0)  # 修改为Numeric
     weight = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)  # 修改为Numeric
     caught_at = db.Column(db.BigInteger, nullable=False, server_default=db.func.extract('epoch', db.func.now()))
     #下次产币时间（默认值为caught_at转换为Unix时间戳并加上10800秒）
     next_output_time = db.Column(db.BigInteger, nullable=True, server_default=db.func.extract('epoch', db.func.now()) + 60)
     #产币存量
-    output_stock = db.Column(db.Numeric(20, 8), nullable=False, default=0)  # 修改为Numeric
+    output_stock = db.Column(db.BigInteger, nullable=False, default=0)  # 修改为Numeric
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), onupdate=db.func.now())
 
@@ -156,7 +156,7 @@ class PondConfig(db.Model):
     __tablename__ = 'pond_configs'
 
     pond_level = db.Column(db.Integer, primary_key=True)
-    upgrade_cost = db.Column(db.Numeric(20, 8), nullable=False)  # GMC cost with 8 decimal places
+    upgrade_cost = db.Column(db.BigInteger, nullable=False)  # GMC cost with 8 decimal places
     fishs_max = db.Column(db.Integer, nullable=False)
     interest = db.Column(db.Numeric(5, 4), nullable=False)  # Interest rate with 4 decimal places
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())

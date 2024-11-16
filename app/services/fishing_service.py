@@ -37,7 +37,7 @@ def get_bait_buy_state(user_id):
         'message': 'success',
         'data': {
             'max_buy_bait': int(max_buy_bait.config_value),
-            'bait_price': str(Decimal(bait_price.config_value))
+            'bait_price': int(bait_price.config_value)
         }
     })
 
@@ -67,7 +67,7 @@ def buy_bait(data):
             time.sleep(10)  # 等待10秒后重试
     #从合约更新user_gmc
     gmc_contract = ethereum_service.get_gmc_contract()
-    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
+    user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18) ) # .call() 用于在本地执行合约函数，不会发起链上交易
     #更新数据库鱼饵数量user.user_baits += buy_amount
     user.user_baits = user.user_baits + buy_amount
     db.session.commit()
@@ -77,7 +77,7 @@ def buy_bait(data):
         'message': 'success',
         'data': {
             'user_baits': user.user_baits,
-            'user_gmc': str(user.user_gmc)
+            'user_gmc': user.user_gmc
         }
     })
 
@@ -195,9 +195,9 @@ def get_fish_info(data):
             'rarity_id': t_rarity_id,
             # 'fishing_ground_id': t_fishing_ground_id,
             # 'fishing_ground_name': t_fishing_ground_name,
-            'price': str(t_price),
-            'output': str(t_output),
-            'weight': str(round(t_weight, 2))
+            'price': t_price,
+            'output': t_output,
+            'weight': round(t_weight, 2)
         }
     })
     
@@ -268,12 +268,12 @@ def sell_fish(data):
     t_fish_id = None
     #从合约更新user_gmc
     gmc_contract = ethereum_service.get_gmc_contract()
-    user.user_gmc = gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)  # .call() 用于在本地执行合约函数，不会发起链上交易
+    user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)) # .call() 用于在本地执行合约函数，不会发起链上交易
     return jsonify({
         'status': 1,
         'message': 'success',
         'data': {
-            'user_gmc': str(user.user_gmc)
+            'user_gmc': user.user_gmc
         }
     })  
     
