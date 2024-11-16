@@ -220,8 +220,14 @@ def collect_bubble(data):
      
     star_level = data.get('star_level')
 
+    # 先累加到collected_gmc
     user.collected_gmc += Decimal(user.bubble_gmc[f"gmc_star{star_level}"])
-    user.bubble_gmc[f"gmc_star{star_level}"] = 0.0 
+    
+    # 将对应星级的bubble_gmc置0
+    bubble_gmc = user.bubble_gmc
+    bubble_gmc[f"gmc_star{star_level}"] = 0
+    user.bubble_gmc = bubble_gmc
+   
     db.session.add(user)  # 明确告诉 ORM 该对象已被修改
     db.session.commit()
     
