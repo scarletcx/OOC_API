@@ -171,7 +171,7 @@ def get_fish_info(data):
     if not fish:
         return jsonify({'status': 0, 'message': 'No fish found for the given criteria'}), 500
 
-    weight = Decimal(random.uniform(float(fish.min_weight), float(fish.max_weight)))
+    weight = random.uniform(float(fish.min_weight), float(fish.max_weight))
     
     #将鱼的信息赋值给变量
     global t_fish_id, t_fish_name, t_fish_picture_res, t_rarity_id, t_price, t_output, t_weight
