@@ -1,4 +1,4 @@
-from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig, PondConfig
+from app.models import User, FishingSession, Fish, FishingRecord, SystemConfig, RarityDetermination, FishingRodConfig, PondConfig, LevelExperience
 from app import db
 from sqlalchemy import func
 import random
@@ -184,6 +184,10 @@ def get_fish_info(data):
     t_price = fish.price
     t_output = fish.output
     t_weight = weight
+
+    # 关闭钓鱼会话
+    session.session_status = False
+    session.end_time = func.now()
     
     return jsonify({
         'status': 1,
@@ -211,6 +215,29 @@ def sell_fish(data):
     user = User.query.get(user_id)
     if not user:
         return jsonify({'status': 0, 'message': 'User not found'}), 404
+    #增加用户经验
+    try:
+        with db.session.begin_nested():
+            # 获取单次钓鱼经验和当前等级的最大经验值
+            fishing_exp = int(SystemConfig.query.filter_by(config_key='fishing_exp').first().config_value)
+            max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            # 计算新经验并在必要时升级
+            new_exp = user.user_exp + fishing_exp
+            while new_exp >= max_exp:
+                user.user_level += 1
+                new_exp -= max_exp
+                max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            user.user_exp = new_exp
+
+        # 提交数据库更改
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 0, 'message': f'Failed to update player experience: {str(e)}'}), 500
+
     # 卖鱼逻辑
     #检查用户是否拥有鱼
     global t_fish_id, t_price
@@ -273,7 +300,9 @@ def sell_fish(data):
         'status': 1,
         'message': 'success',
         'data': {
-            'user_gmc': user.user_gmc
+            'user_gmc': user.user_gmc,
+            'user_level': user.user_level,
+            'user_exp': user.user_exp
         }
     })  
     
@@ -321,10 +350,35 @@ def put_fish_pool(data):
     
     # 获取用户鱼的数量
     user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+
+    #增加用户经验
+    try:
+        with db.session.begin_nested():
+            # 获取单次钓鱼经验和当前等级的最大经验值
+            fishing_exp = int(SystemConfig.query.filter_by(config_key='fishing_exp').first().config_value)
+            max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            # 计算新经验并在必要时升级
+            new_exp = user.user_exp + fishing_exp
+            while new_exp >= max_exp:
+                user.user_level += 1
+                new_exp -= max_exp
+                max_exp = LevelExperience.query.filter_by(user_level=user.user_level).first().max_exp
+
+            user.user_exp = new_exp
+
+        # 提交数据库更改
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 0, 'message': f'Failed to update player experience: {str(e)}'}), 500
     return jsonify({
         'status': 1,
         'message': 'success',
         'data': {
-            "user_fishers_count": user_fishers_count
+            "user_fishers_count": user_fishers_count,
+            'user_level': user.user_level,
+            'user_exp': user.user_exp
         }
     })
