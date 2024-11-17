@@ -225,6 +225,7 @@ def collect_bubble(data):
     
     # 将对应星级的bubble_gmc置0
     bubble_gmc = user.bubble_gmc
+    print(123)
     bubble_gmc[f"gmc_star{star_level}"] = 0
     user.bubble_gmc = bubble_gmc
    

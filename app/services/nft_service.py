@@ -68,9 +68,9 @@ def handle_mint_event(data):
             event_data = {'tokenId': tokenId, 'skinId': f"https://magenta-adorable-stork-81.mypinata.cloud/ipfs/QmWCHJAeyjvDNPrP8U8CrnTwwvAgsMmhBGnyNo4R7g7mBh/{skinId}.png"}
             
             # 更新用户的owned_rod_nfts
-            rod_contract = ethereum_service.get_rod_contract()
-            owned_nfts = rod_contract.functions.getOwnedNFTs(user_id).call()
-            user.owned_rod_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
+            avatar_contract = ethereum_service.get_avatar_contract()
+            owned_nfts = avatar_contract.functions.getOwnedNFTs(user_id).call()
+            user.owned_avatar_nfts = [{"tokenId": str(nft[0]), "skinId": nft[1]} for nft in owned_nfts]
             db.session.commit()
     
         db.session.commit()
