@@ -25,3 +25,9 @@ def update_bubble():
 def collect_bubble():
     data = request.json
     return pond_service.collect_bubble(data)    
+
+#5.5 claim接口
+@bp.route('/app/v1/pond/claim', methods=['POST'])
+def claim():
+    data = request.json
+    return pond_service.claim(data) 

@@ -4,7 +4,10 @@ from app.services import ethereum_service
 from app import db
 from web3.exceptions import TimeExhausted
 import time
+import os   
 from decimal import Decimal
+# 获取Web3实例以连接以太坊网络
+w3 = ethereum_service.get_w3()
 
 #5.1 鱼池升级界面状态接口函数
 def get_upgrade_pond_state(data):
@@ -243,3 +246,120 @@ def collect_bubble(data):
             'bubble_gmc': user.bubble_gmc,  
         }
     })
+
+#5.5 claim接口函数
+def claim(data):
+    try:
+        user_id = data.get('user_id').strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404   
+    
+    # 1. 检查用户是否有两条及以上的鱼
+    fish_count = FishingRecord.query.filter_by(user_id=user_id).count()
+    if fish_count < 2:
+        return jsonify({
+            'status': 0, 
+            'message': 'Less than 2 fish in the pond, cannot perform claim operation'
+        }), 400
+    
+    # 如果collected_gmc为0，则无需进行claim操作
+    if user.collected_gmc == 0:
+        return jsonify({
+            'status': 0,
+            'message': 'No GMC available to claim'
+        }), 400
+        
+    try:
+        #向合约发起mintGMC操作并等待交易完成
+        gmc_contract = ethereum_service.get_gmc_contract()
+        minter_address = os.getenv('MINTER_ADDRESS')
+        
+        if not minter_address:
+            raise ValueError("MINTER_ADDRESS environment variable is not set")
+    
+        # 确保地址是校验和格式
+        checksum_address = w3.to_checksum_address(minter_address)
+        nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
+    
+        # 获取当前的 gas 价格
+        try:
+            gas_price = w3.eth.gas_price
+            # 如果需要，可以稍微提高 gas 价格
+            #gas_price = int(gas_price * 1.1)  # 提高 10%
+        except Exception as e:
+            print(f"无法获取 gas 价格: {e}")
+            # 如果无法获取 gas 价格，使用一个默认值
+            gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
+
+        txn = gmc_contract.functions.mint(user_id, int(user.collected_gmc * (10 ** 18))).build_transaction({
+            'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
+            'gas': 2000000,  # 交易的最大 gas 限制
+            'gasPrice': gas_price,  # 使用计算得到的 gas 价格
+            'nonce': nonce,  # 发送者账户的交易计数
+    })
+    
+    
+        # 签名交易
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+        # 发送交易
+        try:
+            tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        except Exception as e:
+            return jsonify({'status': 0, 'message': f'Failed to send transaction: {e}'}), 500
+
+        # 增加等待时间并添加重试逻辑
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+                break
+            except TimeExhausted:
+                if attempt == max_attempts - 1:
+                    return jsonify({'status': 0, 'message': 'Transaction timed out'}), 500
+                time.sleep(10)  # 等待10秒后重试
+        
+        if tx_receipt.status == 1:  # 交易成功
+           #从合约更新user_gmc
+            gmc_contract = ethereum_service.get_gmc_contract()
+            user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)) # .call() 用于在本地执行合约函数，不会发起链上交易
+            # 将collected_gmc置0
+            user.collected_gmc = 0
+            
+            # 获取该用户rarity_id最小的两条记录并删除
+            records_to_delete = FishingRecord.query.filter_by(user_id=user_id)\
+                .order_by(FishingRecord.rarity_id)\
+                .limit(2)\
+                .all()
+                
+            for record in records_to_delete:
+                db.session.delete(record)
+            
+            db.session.commit()
+            # 获取用户鱼的数量
+            user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+            
+            return jsonify({
+                'status': 1,
+                'message': 'success',
+                'data': {
+                    'collected_gmc': user.collected_gmc,
+                    'user_gmc': user.user_gmc,
+                    'user_fishers_count': user_fishers_count 
+                }
+            })
+        else:
+            return jsonify({
+                'status': 0,
+                'message': 'Contract transaction failed'
+            }), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 0,
+            'message': f'Claim failed: {str(e)}'
+        }), 400
