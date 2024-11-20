@@ -225,18 +225,15 @@ def collect_bubble(data):
 
     # 先累加到collected_gmc
     user.collected_gmc += user.bubble_gmc[f"gmc_star{star_level}"]
-    
     # 将对应星级的bubble_gmc置0
     bubble_gmc = user.bubble_gmc
     print(123)
     bubble_gmc[f"gmc_star{star_level}"] = 0
-    user.bubble_gmc = bubble_gmc
+    #user.bubble_gmc = bubble_gmc
    
-    db.session.add(user)  # 明确告诉 ORM 该对象已被修改
+    #db.session.add(user)  # 明确告诉 ORM 该对象已被修改
+    db.session.query(User).filter(User.user_id == user_id).update({"bubble_gmc": bubble_gmc})
     db.session.commit()
-    
-    db.session.refresh(user)  # 刷新对象，确保数据从数据库中获取
-
     
     return jsonify({
         'status': 1,
