@@ -13,8 +13,10 @@ from web3.exceptions import TimeExhausted
 #2.1 用户注册接口函数
 def register_player(data):
     user_id = data.get('user_id')
+    print('user_id:',user_id)
     try:
         user_id = user_id.strip()
+        print('user_id:',user_id)
     except ValueError:
         return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
     #检查用户是否存在
