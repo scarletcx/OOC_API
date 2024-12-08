@@ -13,7 +13,7 @@ from web3.exceptions import TimeExhausted
 #2.1 用户注册接口函数
 def register_player(data):
     user_id = data.get('user_id')
-    print('user_id:',user_id)
+    #print('user_id:',user_id)
     try:
         user_id = user_id.strip()
         print('user_id:',user_id)
@@ -37,7 +37,7 @@ def register_player(data):
     # 确保地址是校验和格式
     checksum_address = w3.to_checksum_address(minter_address)
     nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
-    print('确保地址是校验和格式')
+    #print('确保地址是校验和格式')
     
     # 获取当前的 gas 价格
     try:
@@ -56,14 +56,14 @@ def register_player(data):
             'gasPrice': gas_price,  # 使用计算得到的 gas 价格
             'nonce': nonce,  # 发送者账户的交易计数
         })
-        print('交易构建完成')
+        #print('交易构建完成')
 
         # 签名交易
         signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
-        print('交易签名完成')
+        #print('交易签名完成')
         # 发送交易
         tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        print('交易发送完成')
+        #print('交易发送完成')
         
         # 增加等待时间并添加重试逻辑
         max_attempts = 3
@@ -241,6 +241,10 @@ def get_fishing_preparation(user_id):
     
     # 获取用户鱼的数量
     user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+
+    # 获取用户拥有的所有鱼的fish_id
+    user_fishers = FishingRecord.query.filter_by(user_id=user_id).all()
+    user_fishers_ids = [fisher.fish_id for fisher in user_fishers]  
     
     # 获取当前等级的鱼池配置
     current_pond = PondConfig.query.get(user.pond_level)
@@ -274,6 +278,7 @@ def get_fishing_preparation(user_id):
             #'avatar_minted': int(free_mint_record.avatar_minted),
             'rod_minted': int(free_mint_record.rod_minted),
             'fishing_count': user.fishing_count,
+            'user_fishers_ids': user_fishers_ids,   
             'next_recovery_time': user.next_recovery_time,
             'max_fishing_count': max_fishing_count  # 添加这一行
         }
