@@ -339,6 +339,10 @@ def claim(data):
             db.session.commit()
             # 获取用户鱼的数量
             user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
+
+            # 获取用户拥有的所有鱼的fish_id
+            user_fishers = FishingRecord.query.filter_by(user_id=user_id).all()
+            user_fishers_ids = [fisher.fish_id for fisher in user_fishers]  
             
             return jsonify({
                 'status': 1,
@@ -346,7 +350,8 @@ def claim(data):
                 'data': {
                     'collected_gmc': user.collected_gmc,
                     'user_gmc': user.user_gmc,
-                    'user_fishers_count': user_fishers_count 
+                    'user_fishers_count': user_fishers_count,
+                    'user_fishers_ids': user_fishers_ids
                 }
             })
         else:

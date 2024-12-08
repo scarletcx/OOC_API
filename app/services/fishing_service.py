@@ -351,6 +351,10 @@ def put_fish_pool(data):
     # 获取用户鱼的数量
     user_fishers_count = FishingRecord.query.filter_by(user_id=user_id).count()
 
+    # 获取用户拥有的所有鱼的fish_id
+    user_fishers = FishingRecord.query.filter_by(user_id=user_id).all()
+    user_fishers_ids = [fisher.fish_id for fisher in user_fishers]  
+
     #增加用户经验
     try:
         with db.session.begin_nested():
@@ -379,6 +383,7 @@ def put_fish_pool(data):
         'data': {
             "user_fishers_count": user_fishers_count,
             'user_level': user.user_level,
-            'user_exp': user.user_exp
+            'user_exp': user.user_exp,
+            'user_fishers_ids': user_fishers_ids
         }
     })
