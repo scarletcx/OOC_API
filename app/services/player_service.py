@@ -37,6 +37,7 @@ def register_player(data):
     # 确保地址是校验和格式
     checksum_address = w3.to_checksum_address(minter_address)
     nonce = w3.eth.get_transaction_count(checksum_address, 'pending')
+    print('确保地址是校验和格式')
     
     # 获取当前的 gas 价格
     try:
@@ -55,11 +56,14 @@ def register_player(data):
             'gasPrice': gas_price,  # 使用计算得到的 gas 价格
             'nonce': nonce,  # 发送者账户的交易计数
         })
+        print('交易构建完成')
 
         # 签名交易
         signed_txn = w3.eth.account.sign_transaction(txn, private_key=os.getenv('MINTER_PRIVATE_KEY'))
+        print('交易签名完成')
         # 发送交易
         tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        print('交易发送完成')
         
         # 增加等待时间并添加重试逻辑
         max_attempts = 3
