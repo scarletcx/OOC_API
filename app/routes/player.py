@@ -15,10 +15,10 @@ def register_player():
 @bp.route('/app/v1/fishing', methods=['POST'])
 def get_fishing_preparation():
     data = request.json
-    user_id = data.get('user_id')
-    if not user_id:
-        return jsonify({'status': 0, 'message': 'Missing user_id parameter'}), 400
-    return player_service.get_fishing_preparation(user_id)
+    # user_id = data.get('user_id')
+    # if not user_id:
+    #     return jsonify({'status': 0, 'message': 'Missing user_id parameter'}), 400
+    return player_service.get_fishing_preparation(data)
 
 #3.2 游戏进入条件检查接口
 @bp.route('/app/v1/game/entercheck', methods=['POST'])

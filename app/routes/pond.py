@@ -31,3 +31,15 @@ def collect_bubble():
 def claim():
     data = request.json
     return pond_service.claim(data) 
+
+#5.6 利息显示接口
+@bp.route('/app/v1/pond/interest/show', methods=['POST'])
+def interest_show():
+    data = request.json
+    return pond_service.interest_show(data)
+
+#5.7 利息领取接口
+@bp.route('/app/v1/pond/interest/claim', methods=['POST'])
+def interest_claim():
+    data = request.json
+    return pond_service.interest_claim(data)    

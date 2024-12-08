@@ -11,6 +11,7 @@ class User(db.Model):
     user_exp = db.Column(db.Integer, nullable=False, default=0)
     user_gmc = db.Column(db.BigInteger, nullable=False, default=0)  
     collected_gmc = db.Column(db.BigInteger, nullable=False, default=0)
+    interest = db.Column(db.BigInteger, nullable=False, default=0)  
     bubble_gmc = db.Column(JSONB, nullable=True)
     user_baits = db.Column(db.Integer, nullable=False, default=30)
     current_avatar_nft = db.Column(JSONB, nullable=True)

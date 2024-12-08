@@ -111,6 +111,7 @@ def upgrade_pond(data):
             'user_gmc': user.user_gmc,
             'pond_level': user.pond_level,
             'fishs_max': current_pond.fishs_max,
+            'interest': current_pond.interest
         }
     })
 
@@ -360,3 +361,15 @@ def claim(data):
             'status': 0,
             'message': f'Claim failed: {str(e)}'
         }), 400
+    
+#5.6 利息接口
+# 利息计算逻辑：
+# 1. 获取用户当前的pond_level和
+# 2. 根据pond_level查询PondConfig表获取当前的interest
+# 3. 计算利息   
+def interest_show(data):
+    pass
+
+#5.7 利息领取接口
+def interest_claim(data):
+    pass    
