@@ -11,8 +11,8 @@ import os
 import json
 from web3.exceptions import TimeExhausted
 #2.1 用户注册接口函数
-def register_player(user_id):
-    # user_id = data.get('user_id')
+def register_player(data):
+    user_id = data.get('user_id')
     try:
         user_id = user_id.strip()
     except ValueError:
