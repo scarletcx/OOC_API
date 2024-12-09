@@ -325,8 +325,8 @@ def claim(data):
            #从合约更新user_gmc
             gmc_contract = ethereum_service.get_gmc_contract()
             user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18)) # .call() 用于在本地执行合约函数，不会发起链上交易
-            # 将collected_gmc置0
-            user.collected_gmc = 0
+            # 将collected_gmc减去claim_number   
+            user.collected_gmc -= claim_number
             
             # 获取该用户rarity_id最小的两条记录并删除
             records_to_delete = FishingRecord.query.filter_by(user_id=user_id)\
