@@ -251,6 +251,7 @@ def claim(data):
         user_id = data.get('user_id').strip()
     except ValueError:
         return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+    claim_number = data.get('claim_number')
         
     user = User.query.get(user_id)
     if not user:
@@ -264,11 +265,11 @@ def claim(data):
             'message': 'Less than 2 fish in the pond, cannot perform claim operation'
         }), 400
     
-    # 如果collected_gmc为0，则无需进行claim操作
-    if user.collected_gmc == 0:
+    # 如果collected_gmc小于claim_number，则无需进行claim操作
+    if user.collected_gmc < claim_number:
         return jsonify({
             'status': 0,
-            'message': 'No GMC available to claim'
+            'message': 'No enough GMC available to claim'
         }), 400
         
     try:
@@ -293,7 +294,7 @@ def claim(data):
             # 如果无法获取 gas 价格，使用一个默认值
             gas_price = w3.to_wei(20, 'gwei')  # 使用 20 Gwei 作为默认值
 
-        txn = gmc_contract.functions.mint(user_id, int(user.collected_gmc * (10 ** 18))).build_transaction({
+        txn = gmc_contract.functions.mint(user_id, int(claim_number * (10 ** 18))).build_transaction({
             'chainId': int(os.getenv('CHAIN_ID')),  # 链ID，用于确定是主网还是测试网
             'gas': 2000000,  # 交易的最大 gas 限制
             'gasPrice': gas_price,  # 使用计算得到的 gas 价格
@@ -367,14 +368,38 @@ def claim(data):
             'message': f'Claim failed: {str(e)}'
         }), 400
     
-#5.6 利息接口
+#5.6 利息显示接口
 # 利息计算逻辑：
-# 1. 获取用户当前的pond_level和
+# 1. 获取用户当前的pond_level、34collected_gmc
 # 2. 根据pond_level查询PondConfig表获取当前的interest
 # 3. 计算利息   
 def interest_show(data):
-    pass
+    try:
+        user_id = data.get('user_id').strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404  
+    #根据user_id获取用户的interest
+    interest = user.interest        
+    return jsonify({
+        'status': 1,
+        'message': 'success',
+        'data': {
+            'interest': interest
+        }
+    })
 
 #5.7 利息领取接口
 def interest_claim(data):
+    try:
+        user_id = data.get('user_id').strip()
+    except ValueError:
+        return jsonify({'status': 0, 'message': 'Invalid user_id format'}), 400
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'status': 0, 'message': 'User not found'}), 404   
     pass    
