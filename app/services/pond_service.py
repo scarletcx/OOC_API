@@ -85,19 +85,34 @@ def upgrade_pond(data):
     for attempt in range(max_attempts):
         try:
             tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+            # 检查交易是否成功
+            if tx_receipt.status != 1:
+                return jsonify({
+                    'status': 0,
+                    'message': 'Transaction failed'
+                }), 400
             break
         except TimeExhausted:
             if attempt == max_attempts - 1:
-                raise
+                return jsonify({
+                    'status': 0,
+                    'message': 'Transaction timeout after multiple attempts'
+                }), 400
             time.sleep(10)  # 等待10秒后重试
-            
-    #从合约更新user_gmc
-    gmc_contract = ethereum_service.get_gmc_contract()
-    user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18))  # .call() 用于在本地执行合约函数，不会发起链上交易
-    #更新后端鱼池等级：user.pound_level += 1
-    user.pond_level += 1
     
-    db.session.commit()
+    try:
+        # 交易成功后才执行更新操作
+        gmc_contract = ethereum_service.get_gmc_contract()
+        user.user_gmc = int(gmc_contract.functions.balanceOf(user_id).call() * (10 ** -18))
+        user.pond_level += 1
+        
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 0,
+            'message': f'Failed to update user data: {str(e)}'
+        }), 500
     
     # 获取当前等级的鱼池配置
     current_pond = PondConfig.query.get(user.pond_level)
